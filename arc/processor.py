@@ -173,36 +173,40 @@ class Processor(object):
         # Thermo:
         species_list_for_thermo_parity = list()
         species_for_thermo_lib = list()
+        unconverged_species = list()
         for species in self.species_dict.values():
-            if not species.is_ts and 'ALL converged' in self.output[species.label]['status']:
-                species_for_thermo_lib.append(species)
-                output_file_path = self._generate_arkane_species_file(species)
-                arkane_spc = arkane_species(str(species.label), species.arkane_file)
-                if species.mol_list:
-                    arkane_spc.molecule = species.mol_list
-                stat_mech_job = StatMechJob(arkane_spc, species.arkane_file)
-                stat_mech_job.applyBondEnergyCorrections = self.use_bac
-                stat_mech_job.modelChemistry = self.model_chemistry
-                stat_mech_job.frequencyScaleFactor = assign_frequency_scale_factor(self.model_chemistry)
-                stat_mech_job.execute(outputFile=output_file_path, plot=False)
-                if species.generate_thermo:
-                    thermo_job = ThermoJob(arkane_spc, 'NASA')
-                    thermo_job.execute(outputFile=output_file_path, plot=False)
-                    species.thermo = arkane_spc.getThermoData()
-                    plotter.log_thermo(species.label, path=output_file_path)
-
-                species.rmg_species = Species(molecule=[species.mol])
-                species.rmg_species.reactive = True
-                if species.mol_list:
-                    species.rmg_species.molecule = species.mol_list  # add resonance structures for thermo determination
-                try:
-                    species.rmg_thermo = self.rmgdb.thermo.getThermoData(species.rmg_species)
-                except ValueError:
-                    logging.info('Could not retrieve RMG thermo for species {0}, possibly due to missing 2D structure '
-                                 '(bond orders). Not including this species in the parity plots.'.format(species.label))
-                else:
+            if not species.is_ts:
+                if 'ALL converged' in self.output[species.label]['status']:
+                    species_for_thermo_lib.append(species)
+                    output_file_path = self._generate_arkane_species_file(species)
+                    arkane_spc = arkane_species(str(species.label), species.arkane_file)
+                    if species.mol_list:
+                        arkane_spc.molecule = species.mol_list
+                    stat_mech_job = StatMechJob(arkane_spc, species.arkane_file)
+                    stat_mech_job.applyBondEnergyCorrections = self.use_bac
+                    stat_mech_job.modelChemistry = self.model_chemistry
+                    stat_mech_job.frequencyScaleFactor = assign_frequency_scale_factor(self.model_chemistry)
+                    stat_mech_job.execute(outputFile=output_file_path, plot=False)
                     if species.generate_thermo:
-                        species_list_for_thermo_parity.append(species)
+                        thermo_job = ThermoJob(arkane_spc, 'NASA')
+                        thermo_job.execute(outputFile=output_file_path, plot=False)
+                        species.thermo = arkane_spc.getThermoData()
+                        plotter.log_thermo(species.label, path=output_file_path)
+
+                    species.rmg_species = Species(molecule=[species.mol])
+                    species.rmg_species.reactive = True
+                    if species.mol_list:
+                        species.rmg_species.molecule = species.mol_list  # add resonance structures for thermo determination
+                    try:
+                        species.rmg_thermo = self.rmgdb.thermo.getThermoData(species.rmg_species)
+                    except ValueError:
+                        logging.info('Could not retrieve RMG thermo for species {0}, possibly due to missing 2D structure '
+                                     '(bond orders). Not including this species in the parity plots.'.format(species.label))
+                    else:
+                        if species.generate_thermo:
+                            species_list_for_thermo_parity.append(species)
+                else:
+                    unconverged_species.append(species)
         # Kinetics:
         rxn_list_for_kinetics_plots = list()
         arkane_spc_dict = dict()  # a dictionary with all species and the TSs
@@ -283,6 +287,11 @@ class Processor(object):
             libraries_path = os.path.join(output_dir, 'RMG libraries')
             plotter.save_kinetics_lib(rxn_list=rxn_list_for_kinetics_plots, path=libraries_path,
                                       name=self.project, lib_long_desc=self.lib_long_desc)
+
+        if unconverged_species:
+            with open(os.path.join(output_dir, 'unconverged_species.log'), 'w') as f:
+                for spc in unconverged_species:
+                    f.write(spc.label + '\n')
 
         self.clean_output_directory()
 
