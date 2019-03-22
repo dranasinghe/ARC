@@ -1,0 +1,15 @@
+%chk=check.chk
+%mem=1500mb
+%nproc=8
+
+#P opt=(calcfc, noeigentest, tight) b3lyp/cbsb7  scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) scf=xqc iop(2/9=2000)
+
+name
+
+0 1
+H       1.08561300    0.08634100    0.02756200
+H       1.82987300    0.08634100    0.02756200
+
+
+
+
