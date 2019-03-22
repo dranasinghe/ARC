@@ -1,0 +1,19 @@
+ARC v1.0.0
+ARC project minimal
+
+Levels of theory used:
+
+Conformers:       b97d/6-31g
+TS guesses:       b3lyp/6-31+g(d,p)
+Optimization:     b3lyp/cbsb7 (using a fine grid)
+Frequencies:      b3lyp/cbsb7
+Single point:     b3lyp/6-311+g(3df,2p)
+Rotor scans:      b3lyp/cbsb7
+Using bond additivity corrections for thermo
+
+Using the following settings: {'molpro': 'pharos', u'ssh': True, 'qchem': 'pharos', 'gaussian': 'c3ddb'}
+
+Considered the following species and TSs:
+Species H2 (run time: 0:01:15)
+
+Overall time since project initiation: 00:02:17

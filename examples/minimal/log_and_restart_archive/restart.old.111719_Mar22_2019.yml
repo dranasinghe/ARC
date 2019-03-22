@@ -1,0 +1,83 @@
+allow_nonisomorphic_2d: false
+composite_method: ''
+conformer_level: b97d/6-31g
+ess_settings: {gaussian: c3ddb, molpro: null, qchem: null, ssh: true}
+fine: true
+freq_level: b3lyp/cbsb7
+generate_conformers: true
+max_job_time: 5
+model_chemistry: ''
+opt_level: b3lyp/cbsb7
+output:
+  H2: {freq: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a3/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a3/output.out,
+    status: 'opt converged; freq converged; '}
+project: minimal
+reactions: []
+running_jobs:
+  H2:
+  - comments: ''
+    ess_trsh_methods: ['scf=(qc,nosymm)', scf=(NDump=30), scf=NoDIIS]
+    final_time: null
+    fine: false
+    initial_time: 2019-03-22 11:06:15
+    initial_trsh: {}
+    job_id: 7584931
+    job_name: sp_a7
+    job_num: 7
+    job_server_name: a7
+    job_status: [running, initializing]
+    job_type: sp
+    level_of_theory: ccsd(t)-f12/cc-pvtz-f12
+    max_job_time: 5
+    memory: 1500
+    occ: null
+    pivots: []
+    project_directory: /home/dranasinghe/Software/ARC/examples/minimal
+    scan: ''
+    scan_res: 8.0
+    scan_trsh: ''
+    server: c3ddb
+    shift: ''
+    software: gaussian
+    trsh: scf=NoDIIS
+    xyz: |
+      H       1.03433300    0.01348000   -0.03269500
+      H       1.77859200    0.01348000   -0.03269500
+scan_level: b3lyp/cbsb7
+scan_rotors: true
+sp_level: ccsd(t)-f12/cc-pvtz-f12
+species:
+- E0: null
+  arkane_file: null
+  bond_corrections: {H-H: 1}
+  charge: 0
+  external_symmetry: null
+  final_xyz: |
+    H       1.03437600    0.01348000   -0.03269500
+    H       1.77854900    0.01348000   -0.03269500
+  generate_thermo: true
+  initial_xyz: |
+    H       1.03433300    0.01348000   -0.03269500
+    H       1.77859200    0.01348000   -0.03269500
+  is_ts: false
+  label: H2
+  long_thermo_description: 'Bond corrections: {''H-H'': 1}
+
+    '
+  mol: |
+    1 H u0 p0 c0 {2,S}
+    2 H u0 p0 c0 {1,S}
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 0
+  opt_level: b3lyp/cbsb7
+  optical_isomers: null
+  rotors_dict: {}
+  run_time: 68.0
+  t1: null
+t_count: null
+t_max: null
+t_min: null
+ts_guess_level: b3lyp/6-31+g(d,p)
+use_bac: true

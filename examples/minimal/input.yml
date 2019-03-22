@@ -1,6 +1,7 @@
 # This is the minimal ARC example, and the smallest input file
 project: minimal
-
+ess_settings: {'qchem': 'pharos', 'molpro': 'pharos', 'ssh': True, 'gaussian': 'c3ddb'}
+sp_level: 'b3lyp/6-311+g(3df,2p)'
 species:
   - label: H2
     smiles: '[H][H]'

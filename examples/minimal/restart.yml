@@ -1,0 +1,56 @@
+allow_nonisomorphic_2d: false
+composite_method: ''
+conformer_level: b97d/6-31g
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
+fine: true
+freq_level: b3lyp/cbsb7
+generate_conformers: true
+max_job_time: 5
+model_chemistry: ''
+opt_level: b3lyp/cbsb7
+output:
+  H2: {freq: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a14/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a14/output.out,
+    sp: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/sp_a15/output.out,
+    status: opt converged; freq converged; sp converged; ALL converged}
+project: minimal
+reactions: []
+running_jobs:
+  H2: []
+scan_level: b3lyp/cbsb7
+scan_rotors: true
+sp_level: b3lyp/6-311+g(3df,2p)
+species:
+- E0: null
+  arkane_file: null
+  bond_corrections: {H-H: 1}
+  charge: 0
+  external_symmetry: null
+  final_xyz: |
+    H       1.19359800   -0.03722400    0.06557400
+    H       1.93777100   -0.03722400    0.06557400
+  generate_thermo: true
+  initial_xyz: |
+    H       1.19355500   -0.03722400    0.06557400
+    H       1.93781400   -0.03722400    0.06557400
+  is_ts: false
+  label: H2
+  long_thermo_description: 'Bond corrections: {''H-H'': 1}
+
+    '
+  mol: |
+    1 H u0 p0 c0 {2,S}
+    2 H u0 p0 c0 {1,S}
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 0
+  opt_level: b3lyp/cbsb7
+  optical_isomers: null
+  rotors_dict: {}
+  run_time: 75.0
+  t1: null
+t_count: null
+t_max: null
+t_min: null
+ts_guess_level: b3lyp/6-31+g(d,p)
+use_bac: true

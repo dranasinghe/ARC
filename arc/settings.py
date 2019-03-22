@@ -34,26 +34,27 @@ import string
 #    },
 # }
 servers = {
-'pharos': {
-              'cluster_soft': 'OGE',  # Oracle Grid Engine
-              'address': 'pharos.mit.edu',
-              'un': 'duminda',
-              'key': '/home/dranasinghe/.ssh/known_hosts',
-              'precedence': 'molpro',
-          },
-          'c3ddb': {
-    'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
-    'address': 'c3ddb01.mit.edu',
-    'un': 'duminda',
-    'key': '/home/dranasinghe/.ssh/id_rsa',
-},
-'rmg': {
-    'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
-    'adddress': 'rmg.mit.edu',
-    'un': 'duminda',
-    'key': '/home/dranasinghe/.ssh/id_rsa',
+    'pharos': {
+        'cluster_soft': 'OGE',  # Oracle Grid Engine
+        'address': 'pharos.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/known_hosts',
+        'precedence': 'molpro',
+    },
+    'c3ddb': {
+        'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
+        'address': 'c3ddb01.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/id_rsa',
+    },
+    'rmg': {
+	'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
+	'address': 'rmg.mit.edu',
+	'un': 'duminda',
+	'key': '/home/dranasinghe/.ssh/id_rsa',
+    }
 }
-}
+
 # List here servers you'd like to associate with specific ESS.
 # An ordered list of servers indicates priority
 # Keeping this dictionary empty will cause ARC to scan for software on the servers defined above
@@ -82,7 +83,6 @@ levels_ess = {
     'gaussian': ['b3lyp', 'm062x'],
     'molpro': ['ccsd', 'cisd', 'vpz'],
     'qchem': ['m06-2x', 'def2']
-
 }
 
 check_status_command = {'OGE': 'export SGE_ROOT=/opt/sge; /opt/sge/bin/lx24-amd64/qstat',
