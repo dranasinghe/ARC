@@ -2,6 +2,9 @@
 # Note that a species can be defined either by xyz, SMILES, or an adjacency list
 # `multiplicity` and `charge` are optional
 project: demo
+job_memory: 16000
+sp_level: 'B3LYP/6-311+G(3df,2p)'
+ess_setting: {'gaussian': 'c3ddb', 'molpro': 'pharos', 'qchem': 'pharos'}
 
 species:
   - label: vinoxy

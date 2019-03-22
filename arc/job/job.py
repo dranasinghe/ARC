@@ -150,10 +150,10 @@ class Job(object):
                             self.method, self.basis_set))
                     self.software = 'gaussian'
                 elif 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
-                    if not self.settings['qchem']:
-                        raise JobError('Could not find the QChem software to run {0}/{1}'.format(
+                    if not self.settings['gaussian']:
+                        raise JobError('Could not find the Gaussian software to run {0}/{1}'.format(
                             self.method, self.basis_set))
-                    self.software = 'qchem'
+                    self.software = 'gaussian'
             elif job_type == 'scan':
                 if 'wb97xd' in self.method:
                     if not self.settings['gaussian']:
@@ -161,10 +161,10 @@ class Job(object):
                             self.method, self.basis_set))
                     self.software = 'gaussian'
                 elif 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
-                    if not self.settings['qchem']:
-                        raise JobError('Could not find the QChem software to run {0}/{1}'.format(
+                    if not self.settings['gaussian']:
+                        raise JobError('Could not find the Gaussian software to run {0}/{1}'.format(
                             self.method, self.basis_set))
-                    self.software = 'qchem'
+                    self.software = 'gaussian'
                 else:
                     if self.settings['gaussian']:
                         self.software = 'gaussian'
@@ -410,12 +410,12 @@ wf,spin={spin},charge={charge};}}
         if self.job_type in ['conformer', 'opt']:
             if self.software == 'gaussian':
                 if self.is_ts:
-                    job_type_1 = 'opt=(ts, calcfc, noeigentest)'
+                    job_type_1 = 'opt=(ts, calcfc, noeigentest) guess=mix'
                 else:
-                    job_type_1 = 'opt=(calcfc, noeigentest)'
+                    job_type_1 = 'opt=(calcfc, noeigentest) guess=mix'
                 if self.fine:
                     # Note that the Acc2E argument is not available in Gaussian03
-                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) guess=read'
                     if self.is_ts:
                         job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
                     else:
@@ -440,7 +440,7 @@ wf,spin={spin},charge={charge};}}
 
         elif self.job_type == 'freq':
             if self.software == 'gaussian':
-                job_type_2 = 'freq iop(7/33=1) scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                job_type_2 = 'freq iop(7/33=1) scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) guess=read'
             elif self.software == 'qchem':
                 job_type_1 = 'freq'
             elif self.software == 'molpro':
@@ -454,7 +454,7 @@ wf,spin={spin},charge={charge};}}
                     job_type_1 = 'opt=(calcfc, noeigentest)'
                 job_type_2 = 'freq iop(7/33=1)'
                 if self.fine:
-                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) guess=read'
                     if self.is_ts:
                         job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
                     else:
@@ -491,7 +491,7 @@ $end
 
         if self.job_type == 'sp':
             if self.software == 'gaussian':
-                job_type_1 = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                job_type_1 = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) guess=read'
             elif self.software == 'qchem':
                 job_type_1 = 'sp'
             elif self.software == 'molpro':
@@ -500,7 +500,7 @@ $end
         if self.job_type == 'composite':
             if self.software == 'gaussian':
                 if self.fine:
-                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12) guess=read'
                 if self.is_ts:
                     job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
                 else:
@@ -512,10 +512,10 @@ $end
             if self.software == 'gaussian':
                 if self.is_ts:
                     job_type_1 = 'opt=(ts, modredundant, calcfc, noeigentest, maxStep=5) scf=(tight, direct)' \
-                                 ' integral=(grid=ultrafine, Acc2E=12)'
+                                 ' integral=(grid=ultrafine, Acc2E=12) guess=read'
                 else:
                     job_type_1 = 'opt=(modredundant, calcfc, noeigentest, maxStep=5) scf=(tight, direct)' \
-                                 ' integral=(grid=ultrafine, Acc2E=12)'
+                                 ' integral=(grid=ultrafine, Acc2E=12) guess=read'
                 scan_string = ''.join([str(num) + ' ' for num in self.scan])
                 if not divmod(360, self.scan_res):
                     raise JobError('Scan job got an illegal rotor scan resolution of {0}'.format(self.scan_res))
@@ -565,8 +565,9 @@ $end
             f.write(self.input)
         if self.settings['ssh']:
             self._upload_input_file()
-            if os.path.isfile(self.checkfile):
-                self._upload_check_file(local_check_file_path=self.checkfile)
+            if self.checkfile is not None:
+                if os.path.isfile(self.checkfile):
+                    self._upload_check_file(local_check_file_path=self.checkfile)
 
     def _upload_submit_file(self):
         ssh = SSH_Client(self.server)
@@ -588,6 +589,7 @@ $end
             else local_check_file_path
         if os.path.isfile(local_check_file_path) and self.software.lower() == 'gaussian':
             ssh.upload_file(remote_file_path=remote_check_file_path, local_file_path=local_check_file_path)
+            logging.info('uploading checkpoint file\n')
 
     def _download_output_file(self):
         ssh = SSH_Client(self.server)
