@@ -1,0 +1,58 @@
+composite_method: cbs-qb3
+conformer_level: hf/3-21g*
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
+fine: true
+generate_conformers: true
+model_chemistry: cbs-qb3
+output:
+  H2: {composite: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/composite_a1662/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a1663/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/minimal/calcs/Species/H2/freq_a1663/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+project: minimal
+reactions: []
+running_jobs:
+  H2: []
+scan_level: b3lyp/cbsb7
+scan_rotors: true
+species:
+- E0: null
+  arkane_file: null
+  bond_corrections: {H-H: 1}
+  charge: 0
+  execution_time: 00:01:38
+  external_symmetry: null
+  final_xyz: 'H       1.19804800    0.01874300    0.06873000
+
+    H       1.94230700    0.01874300    0.06873000
+
+    '
+  generate_thermo: true
+  initial_xyz: 'H       1.07017769    0.01874271    0.06872992
+
+    H       2.07017769    0.01874271    0.06872992
+
+    '
+  is_ts: false
+  label: H2
+  long_thermo_description: 'Bond corrections: {''H-H'': 1}
+
+    '
+  mol: '1 H u0 p0 c0 {2,S}
+
+    2 H u0 p0 c0 {1,S}
+
+    '
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 0
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict: {}
+  t0: 1550341507.562587
+  t1: null
+t_count: null
+t_max: null
+t_min: null
+ts_guess_level: b3lyp/6-311+g(d,p)
+use_bac: true

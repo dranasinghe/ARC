@@ -4,6 +4,10 @@
 # The TS here is of a hydrogen abstraction reaction, N2H4 + NH <=> N2H3 + NH2
 project: TS
 
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
+composite_method: CBS-QB3
+scan_level: B3LYP/CBSB7
+
 use_bac: False
 scan_rotors: False
 

@@ -451,7 +451,7 @@ class Scheduler(object):
             if spc.yml_path is not None:
                 self.species_dict[spc.label] = spc
 
-    def run_job(self, label, xyz, level_of_theory, job_type, fine=False, software=None, shift='', trsh='', memory=1500,
+    def run_job(self, label, xyz, level_of_theory, job_type, fine=False, software=None, shift='', trsh='', memory=15000,
                 conformer=-1, ess_trsh_methods=None, scan='', pivots=None, occ=None):
         """
         A helper function for running (all) jobs

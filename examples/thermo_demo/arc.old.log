@@ -1,0 +1,156 @@
+ARC execution initiated on Sat Feb 16 13:42:30 2019
+
+###############################################################
+#                                                             #
+#                 Automatic Rate Calculator                   #
+#                            ARC                              #
+#                                                             #
+#   Version: 0.1                                              #
+#                                                             #
+###############################################################
+
+Starting project demo
+
+Using the following settings: {'molpro': 'pharos', 'gaussian': 'c3ddb', 'qchem': 'pharos', 'ssh': True}
+
+Using default level HF/3-21g* for refined conformer searches (after filtering via force fields)
+Using default level b3lyp/6-311+g(d,p) for TS guesses comparison of different methods
+Using composite method cbs-qb3
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+Using b3lyp/cbsb7 for rotor scans
+Using default level b3lyp/cbsb7 for frequency calculations after composite jobs
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+
+
+Considering species: vinoxy
+Considering species: OH
+Considering species: methylamine
+Considering species: propene
+Considering species: N2H4
+
+
+
+Found 1 rotor for vinoxy
+Pivot list(s) for vinoxy: [[2, 3]]
+
+Running job composite_a1664 for OH
+
+Found 1 rotor for methylamine
+Pivot list(s) for methylamine: [[1, 2]]
+
+
+Found 1 rotor for propene
+Pivot list(s) for propene: [[1, 2]]
+
+
+Found 1 rotor for N2H4
+Pivot list(s) for N2H4: [[1, 2]]
+
+Error: job_num: 1665
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1665
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1665
+Error: Setting it to gaussian
+Running job conformer_a1665 for vinoxy
+Error: job_num: 1666
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1666
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1666
+Error: Setting it to gaussian
+Running job conformer_a1666 for vinoxy
+Error: job_num: 1667
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1667
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1667
+Error: Setting it to gaussian
+Running job conformer_a1667 for vinoxy
+Error: job_num: 1668
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1668
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1668
+Error: Setting it to gaussian
+Running job conformer_a1668 for vinoxy
+Error: job_num: 1669
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1669
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1669
+Error: Setting it to gaussian
+Running job conformer_a1669 for methylamine
+Error: job_num: 1670
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1670
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1670
+Error: Setting it to gaussian
+Running job conformer_a1670 for methylamine
+Error: job_num: 1671
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1671
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1671
+Error: Setting it to gaussian
+Running job conformer_a1671 for propene
+Error: job_num: 1672
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1672
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1672
+Error: Setting it to gaussian
+Running job conformer_a1672 for propene
+Error: job_num: 1673
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: conformer
+Error: job_name: conformer_a1673
+Error: level_of_theory: hf/3-21g*
+Error: software: None
+Error: method: hf
+Error: basis_set: 3-21g*
+Error: Could not determine software for job conformer_a1673
+Error: Setting it to gaussian
+Running job conformer_a1673 for N2H4

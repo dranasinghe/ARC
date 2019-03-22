@@ -1,0 +1,6 @@
+
+Sources of thermoproperties determined by RMG for the parity plots:
+   methylamine: Thermo library: thermo_DFT_CCSDTF12_BAC
+   N2H4:        Thermo library: thermo_DFT_CCSDTF12_BAC
+   propene:     Thermo library: DFT_QCI_thermo
+   vinoxy:      Thermo library: DFT_QCI_thermo

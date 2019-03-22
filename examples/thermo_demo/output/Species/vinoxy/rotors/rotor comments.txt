@@ -1,0 +1,2 @@
+Pivots: [2, 3]
+Comment: Rotor scan of vinoxy between pivots [2, 3] has a barrier larger than 40 kJ/mol. Invalidating rotor.; *INVALIDATED* 

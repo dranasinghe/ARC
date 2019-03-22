@@ -1,0 +1,117 @@
+RMG_version: 2.3.0
+adjacency_list: '1 N u0 p1 c0 {2,S} {6,S} {7,S}
+  2 C u0 p0 c0 {1,S} {3,S} {4,S} {5,S}
+  3 H u0 p0 c0 {2,S}
+  4 H u0 p0 c0 {2,S}
+  5 H u0 p0 c0 {2,S}
+  6 H u0 p0 c0 {1,S}
+  7 H u0 p0 c0 {1,S}
+'
+chemkin_thermo_string: "methylamine             H   5C   1N   1     G    10.000  3000.000
+  \ 644.49      1\n 9.15559015E-01 1.86585491E-02-8.91525330E-06 2.08772288E-09-1.93352937E-13
+  \   2\n-3.98623745E+03 1.87400196E+01 4.00472298E+00-5.14021325E-04 3.57069481E-05
+  \   3\n-4.40694418E-08 1.77109956E-11-4.38442857E+03 5.19361496E+00                   4\n"
+class: ArkaneSpecies
+conformer:
+  E0: {class: ScalarQuantity, units: kJ/mol, value: -36.451184398746584}
+  class: Conformer
+  coordinates:
+    class: ArrayQuantity
+    units: angstroms
+    value:
+    - [0.824267, 0.206191, -0.34885199999999994]
+    - [-0.56981, -0.022794, 0.043440999999999994]
+    - [-1.084799, -0.562956, -0.755389]
+    - [-0.71377, -0.587986, 0.9781339999999998]
+    - [-1.075527, 0.9399919999999999, 0.154845]
+    - [1.305533, -0.6810129999999999, -0.4568769999999999]
+    - [1.314106, 0.708567, 0.38469699999999996]
+  mass:
+    class: ArrayQuantity
+    units: amu
+    value: [14.00307400443, 12.000000000000002, 1.00782503224, 1.00782503224, 1.00782503224,
+      1.00782503224, 1.00782503224]
+  modes:
+  - class: IdealGasTranslation
+    mass: {class: ScalarQuantity, units: amu, value: 31.0422}
+    quantum: false
+  - class: NonlinearRotor
+    inertia:
+      class: ArrayQuantity
+      units: amu*angstrom^2
+      value: [4.886570149915686, 22.27346930270587, 23.158429883116305]
+    quantum: false
+    rotationalConstant:
+      class: ArrayQuantity
+      units: cm^-1
+      value: [3.449787588466188, 0.756847926303989, 0.7279262514095818]
+    symmetry: 1
+  - class: HarmonicOscillator
+    frequencies:
+      class: ArrayQuantity
+      units: cm^-1
+      value: [844.7386519679167, 969.6398413505086, 1045.4637945026193, 1160.0499066549244,
+        1339.6359228880501, 1447.0017984283058, 1482.2036322963554, 1503.914578745942,
+        1652.122508874935, 2918.2928442688753, 3021.169072525834, 3056.108918656112,
+        3453.0238601714636, 3526.632294909361]
+    quantum: true
+  - class: HinderedRotor
+    fourier:
+      class: ArrayQuantity
+      units: kJ/mol
+      value:
+      - [-0.0635472387032819, 0.07183862537996015, -4.4721423887797105, -0.06812537937438606,
+        0.04474068597522171]
+      - [0.1014230103163631, 0.12448942013334813, -0.4718669110087384, 0.0931588051562028,
+        0.0965850779793073]
+    frequency: 317.0039013298145
+    inertia: {class: ScalarQuantity, units: amu*angstrom^2, value: 1.1217515068107444}
+    quantum: false
+    rotationalConstant: {class: ScalarQuantity, units: cm^-1, value: 15.027953117064648}
+    semiclassical: true
+    symmetry: 3
+  number:
+    class: ArrayQuantity
+    value: [7.0, 6.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  opticalIsomers: 1
+  spinMultiplicity: 1
+datetime: 2019-02-16 15:03
+inchi: InChI=1S/CH5N/c1-2/h2H2,1H3
+inchi_key: BAVYZALUXZFZLV-UHFFFAOYSA-N
+label: methylamine
+molecular_weight: {class: ScalarQuantity, units: amu, value: 31.057143273234747}
+smiles: CN
+thermo:
+  Cp0: {class: ScalarQuantity, units: J/(mol*K), value: 33.257888}
+  CpInf: {class: ScalarQuantity, units: J/(mol*K), value: 153.817732}
+  E0: {class: ScalarQuantity, units: kJ/mol, value: -36.455086150547224}
+  Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+  Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+  class: NASA
+  polynomials:
+    polynomial1:
+      Tmax: {class: ScalarQuantity, units: K, value: 644.4850998336283}
+      Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+      class: NASAPolynomial
+      coeffs: [4.004722980869634, -0.0005140213252638404, 3.570694811770624e-05, -4.4069441846265166e-08,
+        1.771099557416501e-11, -4384.428568198051, 5.193614955945202]
+    polynomial2:
+      Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+      Tmin: {class: ScalarQuantity, units: K, value: 644.4850998336283}
+      class: NASAPolynomial
+      coeffs: [0.915559015165333, 0.01865854913285725, -8.915253301855255e-06, 2.0877228790544597e-09,
+        -1.9335293701975343e-13, -3986.237453456119, 18.740019578614998]
+thermo_data:
+  Cp (cal/mol*K): {1000 K: '24.95', 1500 K: '29.63', 2000 K: '32.15', 2400 K: '33.37',
+    300 K: '11.96', 400 K: '14.20', 500 K: '16.44', 600 K: '18.53', 800 K: '22.11'}
+  H298: -5.92 kcal/mol
+  S298: 57.80 cal/mol*K
+xyz: '7
+  methylamine
+  N 8.24267e-11 2.06191e-11 -3.48852e-11
+  C -5.6981e-11 -2.2794e-12 4.3441e-12
+  H -1.084799e-10 -5.62956e-11 -7.55389e-11
+  H -7.1377e-11 -5.87986e-11 9.78134e-11
+  H -1.075527e-10 9.39992e-11 1.54845e-11
+  H 1.305533e-10 -6.81013e-11 -4.56877e-11
+  H 1.314106e-10 7.08567e-11 3.84697e-11'

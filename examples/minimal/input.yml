@@ -1,6 +1,8 @@
 # This is the minimal ARC example, and the smallest input file
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
 project: minimal
-
+composite_method: CBS-QB3
+scan_level: B3LYP/CBSB7
 species:
   - label: H2
     smiles: '[H][H]'

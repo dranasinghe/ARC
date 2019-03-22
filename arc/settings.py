@@ -29,18 +29,23 @@ import string
 #     }
 # }
 servers = {
-    'server1': {
-        'cluster_soft': 'OGE',  # Oracle Grid Engine
-        'adddress': 'server1.host.edu',
-        'un': '<username>',
-        'key': 'path_to_rsa_key',
-        'precedence': 'molpro',
+    'pharos': {
+        'cluster_soft': 'OGE',  # Oracle Grid Engine (Sun Grin Engine)
+        'adddress': 'pharos.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/known_hosts',
     },
-    'server2': {
+    'rmg': {
         'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
-        'adddress': 'server2.host.edu',
-        'un': '<username>',
-        'key': 'path_to_rsa_key',
+        'adddress': 'rmg.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/id_rsa',
+    },
+    'c3ddb': {
+        'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
+        'adddress': 'c3ddb01.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/id_rsa',
     }
 }
 
@@ -69,13 +74,13 @@ output_filename = {'gaussian': 'input.log',
                    'molpro': 'input.out',
 }
 
-default_levels_of_theory = {'conformer': 'b97-d3/6-311+g(d,p)',
+default_levels_of_theory = {'conformer': 'b97d/6-31g',
                             'ts_guesses': 'b3lyp/6-311+g(d,p)',
-                            'opt': 'wb97xd/6-311++g(d,p)',
-                            'freq': 'wb97xd/6-311++g(d,p)',
+                            'opt': 'b3lyp/CBSB7',
+                            'freq': 'b3lyp/CBSB7',
                             'sp': 'ccsd(t)-f12/cc-pvtz-f12',  # This should be a level for which BAC is available
                             # 'sp': 'b3lyp/6-311+g(3df,2p)',
-                            'scan': 'b3lyp/6-311+g(d,p)',
+                            'scan': 'b3lyp/CBSB7',
                             'irc': 'b3lyp/6-31+g(d)',
                             'gsm': 'b3lyp/6-31+g(d)',
                             'scan_for_composite': 'B3LYP/CBSB7',  # This is the frequency level of the CBS-QB3 method
@@ -85,13 +90,13 @@ default_levels_of_theory = {'conformer': 'b97-d3/6-311+g(d,p)',
 # default_ts_methods = ['QST2', 'DEGSM', 'NEB', 'Kinbot', 'AutoTST']
 default_ts_methods = ['AutoTST']
 
-arc_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))  # absolute path to the ARC folder
-
+#arc_path = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))  # absolute path to the ARC folder
+arc_path ='/media/sf_Work/ARC-Calculations'
 valid_chars = "-_()[]=., %s%s" % (string.ascii_letters, string.digits)
 
 # A scan with better resolution (lower number here) takes more time to compute,
 # but the automatically-derived rotor symmetry number is more likely to be correct.
-rotor_scan_resolution = 8.0  # degrees. Default: 8.0
+rotor_scan_resolution = 10.0  # degrees. Default: 8.0
 
 # rotor validation parameters
 inconsistency_az = 5   # maximum allowed inconsistency (kJ/mol) between initial and final rotor scan points. Default: 5

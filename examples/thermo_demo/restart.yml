@@ -1,0 +1,360 @@
+composite_method: cbs-qb3
+conformer_level: b97d/6-31g
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
+fine: true
+generate_conformers: true
+model_chemistry: cbs-qb3
+output:
+  N2H4: {composite: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/N2H4/composite_a1700/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/N2H4/freq_a1701/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/N2H4/freq_a1701/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL convergedopt
+      converged; composite converged; freq converged; freq converged; ; ALL converged}
+  OH: {composite: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/OH/composite_a1674/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/OH/freq_a1688/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/OH/freq_a1688/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+  methylamine: {composite: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/methylamine/composite_a1685/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/methylamine/freq_a1689/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/methylamine/freq_a1689/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+  propene: {composite: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/propene/composite_a1691/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/propene/freq_a1694/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/propene/freq_a1694/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+  vinoxy: {composite: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/vinoxy/composite_a1687/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/vinoxy/freq_a1696/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/vinoxy/freq_a1696/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+project: demo
+reactions: []
+running_jobs:
+  vinoxy: []
+scan_level: b3lyp/cbsb7
+scan_rotors: true
+species:
+- E0: null
+  arkane_file: null
+  bond_corrections: {C-H: 3, C-N: 1, H-N: 2}
+  charge: 0
+  execution_time: 00:31:33
+  external_symmetry: null
+  final_xyz: 'N       0.82426700    0.20619100   -0.34885200
+
+    C      -0.56981000   -0.02279400    0.04344100
+
+    H      -1.08479900   -0.56295600   -0.75538900
+
+    H      -0.71377000   -0.58798600    0.97813400
+
+    H      -1.07552700    0.93999200    0.15484500
+
+    H       1.30553300   -0.68101300   -0.45687700
+
+    H       1.31410600    0.70856700    0.38469700
+
+    '
+  generate_thermo: true
+  initial_xyz: 'N       0.83069800    0.17139300   -0.29146100
+
+    C      -0.58251000   -0.03062500    0.05650000
+
+    H      -1.08281800   -0.56750100   -0.76501500
+
+    H      -0.77439000   -0.59873500    0.99650000
+
+    H      -1.07345200    0.95061000    0.15440200
+
+    H       1.33679300   -0.68285100   -0.51168800
+
+    H       1.34568000    0.75770900    0.36076100
+
+    '
+  is_ts: false
+  label: methylamine
+  long_thermo_description: 'Bond corrections: {''C-N'': 1, ''H-N'': 2, ''C-H'': 3}
+
+    '
+  mol: '1 N u0 p1 c0 {2,S} {6,S} {7,S}
+
+    2 C u0 p0 c0 {1,S} {3,S} {4,S} {5,S}
+
+    3 H u0 p0 c0 {2,S}
+
+    4 H u0 p0 c0 {2,S}
+
+    5 H u0 p0 c0 {2,S}
+
+    6 H u0 p0 c0 {1,S}
+
+    7 H u0 p0 c0 {1,S}
+
+    '
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 1
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict:
+    0:
+      pivots: [1, 2]
+      scan: [6, 1, 2, 3]
+      scan_path: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/methylamine/scan_a1690/output.out
+      success: true
+      symmetry: 3
+      times_dihedral_set: 0
+      top: [1, 7, 6]
+  t0: 1550342819.128018
+  t1: null
+- E0: null
+  arkane_file: null
+  bond_corrections: {H-N: 4, N-N: 1}
+  charge: 0
+  execution_time: 00:52:24
+  external_symmetry: null
+  final_xyz: 'N      -0.65290500    0.01707700   -0.30192400
+
+    N       0.61708000    0.05498100    0.36591200
+
+    H      -1.13143400   -0.82163600    0.00542400
+
+    H      -1.23890700    0.81257200   -0.05731400
+
+    H       0.56883900    0.54964900    1.25418100
+
+    H       1.25856600    0.56221000   -0.23250600
+
+    '
+  generate_thermo: true
+  initial_xyz: 'N      -0.64632500    0.01161800   -0.33841500
+
+    N       0.63039900    0.01996100    0.36686000
+
+    H      -1.14746200   -0.82631500    0.00968300
+
+    H      -1.21880900    0.81457300   -0.00985400
+
+    H       0.53223200    0.58123000    1.23620900
+
+    H       1.27120300    0.57378500   -0.23071000
+
+    '
+  is_ts: false
+  label: N2H4
+  long_thermo_description: 'Bond corrections: {''N-N'': 1, ''H-N'': 4}
+
+    '
+  mol: '1 N u0 p1 c0 {2,S} {3,S} {4,S}
+
+    2 N u0 p1 c0 {1,S} {5,S} {6,S}
+
+    3 H u0 p0 c0 {1,S}
+
+    4 H u0 p0 c0 {1,S}
+
+    5 H u0 p0 c0 {2,S}
+
+    6 H u0 p0 c0 {2,S}
+
+    '
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 1
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict:
+    0:
+      pivots: [1, 2]
+      scan: [2, 0, 1, 4]
+      scan_path: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/N2H4/scan_a1693/output.out
+      success: true
+      times_dihedral_set: 1
+      top: [1, 3, 4]
+  t0: 1550342827.327003
+  t1: null
+- E0: null
+  arkane_file: null
+  bond_corrections: {C-C: 1, C-H: 6, C=C: 1}
+  charge: 0
+  execution_time: 00:36:50
+  external_symmetry: null
+  final_xyz: 'C      -1.10289700    0.12082900   -0.25978300
+
+    C       0.16168500   -0.25008400    0.45752100
+
+    C       1.39304700    0.01218600    0.03065300
+
+    H      -0.89493200    0.64391900   -1.19612000
+
+    H      -1.73214900    0.76806500    0.36125600
+
+    H      -1.69997400   -0.76857400   -0.49005100
+
+    H       0.03563100   -0.77623400    1.40247600
+
+    H       2.26742000   -0.28434000    0.59893800
+
+    H       1.57216900    0.53423200   -0.90488900
+
+    '
+  generate_thermo: true
+  initial_xyz: 'C      -1.11035400    0.12086800   -0.26013600
+
+    C       0.16007300   -0.25580300    0.46778300
+
+    C       1.40455200    0.01274900    0.03007100
+
+    H      -0.88851100    0.64729500   -1.20197000
+
+    H      -1.74635200    0.77706000    0.36131500
+
+    H      -1.71388000   -0.77384300   -0.49789500
+
+    H       0.02960100   -0.78536700    1.41873400
+
+    H       2.29065700   -0.28198800    0.59557000
+
+    H       1.57421300    0.53903000   -0.91347200
+
+    '
+  is_ts: false
+  label: propene
+  long_thermo_description: 'Bond corrections: {''C=C'': 1, ''C-C'': 1, ''C-H'': 6}
+
+    '
+  mol: '1 C u0 p0 c0 {2,S} {4,S} {5,S} {6,S}
+
+    2 C u0 p0 c0 {1,S} {3,D} {7,S}
+
+    3 C u0 p0 c0 {2,D} {8,S} {9,S}
+
+    4 H u0 p0 c0 {1,S}
+
+    5 H u0 p0 c0 {1,S}
+
+    6 H u0 p0 c0 {1,S}
+
+    7 H u0 p0 c0 {2,S}
+
+    8 H u0 p0 c0 {3,S}
+
+    9 H u0 p0 c0 {3,S}
+
+    '
+  multiplicity: 1
+  neg_freqs_trshed: []
+  number_of_rotors: 1
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict:
+    0:
+      pivots: [1, 2]
+      scan: [4, 1, 2, 3]
+      scan_path: /home/dranasinghe/Software/ARC/examples/thermo_demo/calcs/Species/propene/scan_a1695/output.out
+      success: true
+      symmetry: 3
+      times_dihedral_set: 0
+      top: [1, 4, 5, 6]
+  t0: 1550342822.560567
+  t1: null
+- E0: null
+  arkane_file: null
+  bond_corrections: {C-H: 3, C-O: 1, C=C: 1}
+  charge: 0
+  execution_time: 01:14:49
+  external_symmetry: null
+  final_xyz: 'O       0.98635600   -0.15407700    0.26054000
+
+    C       2.81542200    1.26704200    0.57845700
+
+    C       2.16411400    0.12608400    0.02793500
+
+    H       3.85230800    1.48727500    0.35547800
+
+    H       2.25688900    1.92471400    1.23327000
+
+    H       2.77290100   -0.51768900   -0.63546200
+
+    '
+  generate_thermo: true
+  initial_xyz: 'O       0.95220600   -0.16848900    0.26295400
+
+    C       2.81799700    1.26906200    0.57891900
+
+    C       2.17505300    0.12663300    0.02436100
+
+    H       3.86297200    1.49295100    0.35553500
+
+    H       2.25928700    1.93459400    1.23920800
+
+    H       2.78047600   -0.52140300   -0.64075800
+
+    '
+  is_ts: false
+  label: vinoxy
+  long_thermo_description: 'Bond corrections: {''C-O'': 1, ''C=C'': 1, ''C-H'': 3}
+
+    '
+  mol: 'multiplicity 2
+
+    1 O u1 p2 c0 {3,S}
+
+    2 C u0 p0 c0 {3,D} {4,S} {5,S}
+
+    3 C u0 p0 c0 {1,S} {2,D} {6,S}
+
+    4 H u0 p0 c0 {2,S}
+
+    5 H u0 p0 c0 {2,S}
+
+    6 H u0 p0 c0 {3,S}
+
+    '
+  multiplicity: 2
+  neg_freqs_trshed: []
+  number_of_rotors: 1
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict:
+    0:
+      pivots: [2, 3]
+      scan: [4, 2, 3, 1]
+      scan_path: ''
+      success: false
+      times_dihedral_set: 0
+      top: [2, 4, 5]
+  t0: 1550342809.888072
+  t1: null
+- E0: null
+  arkane_file: null
+  bond_corrections: {}
+  charge: 0
+  execution_time: 00:03:09
+  external_symmetry: null
+  final_xyz: 'O       0.00000000    0.00000000   -0.12209300
+
+    H       0.00000000    0.00000000    0.85305500
+
+    '
+  generate_thermo: true
+  initial_xyz: 'O       0.00000000    0.00000000   -0.12002167
+
+    H       0.00000000    0.00000000    0.85098324
+
+    '
+  is_ts: false
+  label: OH
+  long_thermo_description: ''
+  multiplicity: 2
+  neg_freqs_trshed: []
+  number_of_rotors: 0
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict: {}
+  t0: 1550342805.474805
+  t1: null
+t_count: null
+t_max: null
+t_min: null
+ts_guess_level: b3lyp/6-311+g(d,p)
+use_bac: true

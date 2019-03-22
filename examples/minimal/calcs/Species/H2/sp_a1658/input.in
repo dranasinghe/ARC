@@ -1,0 +1,20 @@
+***,name
+memory,187.5,m;
+geometry={angstrom;
+H       1.15142000   -0.09583500   -0.01601400
+H       1.89587400   -0.09583500   -0.01601300
+}
+
+basis=cc-pvtz-f12
+
+int;
+
+{hf;
+maxit,1000;
+wf,spin=0,charge=0;}
+
+ccsd(t)-f12;
+
+
+---;
+

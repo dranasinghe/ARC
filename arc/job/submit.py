@@ -7,6 +7,41 @@
 
 submit_scripts = {
     'gaussian': """#!/bin/bash
+#SBATCH --job-name {name}
+#SBATCH -t 5-00:00:00
+#SBATCH -N 1
+#SBATCH -n 8
+#SBATCH -p defq
+#SBATCH --mem-per-cpu 2500
+
+module add c3ddb/gaussian/09.d01
+which g09
+echo 'SLURM_JOB_NAME': $SLURM_JOB_NAME
+echo 'SLURM_JOB_NAME': $SLURM_JOB_ID
+
+WorkDir=/scratch/users/duminda/$SLURM_JOB_NAME
+SubmitDir=`pwd`
+
+GAUSS_SCRDIR=/scratch/users/duminda/g09/$SLURM_JOB_NAME-$SLURM_JOB_ID
+export  GAUSS_SCRDIR
+
+mkdir -p $GAUSS_SCRDIR
+mkdir -p $WorkDir
+
+cd  $WorkDir
+. $g09root/g09/bsd/g09.profile
+
+cp $SubmitDir/input.gjf .
+
+g09 < input.gjf > input.log
+formchk  check.chk check.fchk
+cp * $SubmitDir/
+
+rm -rf $GAUSS_SCRDIR
+rm -rf $WorkDir
+
+""",
+    'gaussian_pharos': """#!/bin/bash
 #$ -N {name}
 #$ -l long
 #$ -l h_rt=120:00:00
@@ -20,12 +55,12 @@ submit_scripts = {
 PATH=$PATH:/home/{un}
 export LD_LIBRARY_PATH=/opt/intel/Compiler/11.0/074/bin/intel64:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/opt/intel/Compiler/11.0/074/mkl/lib/em64t:$LD_LIBRARY_PATH
-g03root=/opt
+g16root=/opt
 GAUSS_SCRDIR=/scratch/{un}
-export g03root GAUSS_SCRDIR
-. $g03root/g03/bsd/g03.profile
+export g16root GAUSS_SCRDIR
+. $g16root/g16/bsd/g16.profile
 export LD_LIBRARY_PATH=$HOME'/gcc/gcc-4.7/lib64':$LD_LIBRARY_PATH
-export PATH LIBPATH GAUSS_SCRDIR g03root
+export PATH LIBPATH GAUSS_SCRDIR g16root
 export PATH=$PATH:$SGE_ROOT/bin/lx24-amd64
 export PATH=$PATH:/opt/mpich2-1.2.1p1/bin
 
@@ -35,7 +70,7 @@ source .bashrc
 mkdir -p /scratch/{un}
 cd $WorkDir
 
-g03 input.gjf
+g16 input.gjf
 
 """,
     'qchem': """#!/bin/bash

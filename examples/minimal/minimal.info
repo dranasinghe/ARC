@@ -1,0 +1,17 @@
+ARC project minimal
+
+Levels of theory used:
+
+Conformers:       hf/3-21g*
+TS guesses:       b3lyp/6-311+g(d,p)
+Composite method: cbs-qb3 (using a fine grid)
+Frequencies:      b3lyp/cbsb7
+Rotor scans:      b3lyp/cbsb7
+Using bond additivity corrections for thermo
+
+Using the following settings: {'molpro': 'pharos', 'gaussian': 'c3ddb', 'qchem': 'pharos', 'ssh': True}
+
+Considered the following species and TSs:
+Species H2 (execution time: 00:01:38)
+
+Overall execution time: 00:03:42

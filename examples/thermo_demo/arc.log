@@ -1,0 +1,455 @@
+ARC execution initiated on Sat Feb 16 13:46:45 2019
+
+###############################################################
+#                                                             #
+#                 Automatic Rate Calculator                   #
+#                            ARC                              #
+#                                                             #
+#   Version: 0.1                                              #
+#                                                             #
+###############################################################
+
+Starting project demo
+
+Using the following settings: {'molpro': 'pharos', 'gaussian': 'c3ddb', 'qchem': 'pharos', 'ssh': True}
+
+Using default level b97d/6-31g for refined conformer searches (after filtering via force fields)
+Using default level b3lyp/6-311+g(d,p) for TS guesses comparison of different methods
+Using composite method cbs-qb3
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+Using b3lyp/cbsb7 for rotor scans
+Using default level b3lyp/cbsb7 for frequency calculations after composite jobs
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+
+
+Considering species: vinoxy
+Considering species: OH
+Considering species: methylamine
+Considering species: propene
+Considering species: N2H4
+
+
+
+Found 1 rotor for vinoxy
+Pivot list(s) for vinoxy: [[2, 3]]
+
+Running job composite_a1674 for OH
+
+Found 1 rotor for methylamine
+Pivot list(s) for methylamine: [[1, 2]]
+
+
+Found 1 rotor for propene
+Pivot list(s) for propene: [[1, 2]]
+
+
+Found 1 rotor for N2H4
+Pivot list(s) for N2H4: [[1, 2]]
+
+Running job conformer_a1675 for vinoxy
+Running job conformer_a1676 for vinoxy
+Running job conformer_a1677 for vinoxy
+Running job conformer_a1678 for vinoxy
+Running job conformer_a1679 for methylamine
+Running job conformer_a1680 for methylamine
+Running job conformer_a1681 for propene
+Running job conformer_a1682 for propene
+Running job conformer_a1683 for N2H4
+Running job conformer_a1684 for N2H4
+  Ending job conformer_a1677 for vinoxy (0:00:49)
+  Ending job conformer_a1679 for methylamine (0:00:49)
+  Ending job conformer_a1680 for methylamine (0:00:50)
+
+Conformer jobs for methylamine successfully terminated.
+
+Running job composite_a1685 for methylamine
+  Ending job conformer_a1681 for propene (0:00:52)
+  Ending job conformer_a1684 for N2H4 (0:01:20)
+  Ending job conformer_a1675 for vinoxy (0:02:14)
+  Ending job conformer_a1683 for N2H4 (0:01:59)
+
+Conformer jobs for N2H4 successfully terminated.
+
+Running job composite_a1686 for N2H4
+  Ending job conformer_a1676 for vinoxy (0:02:18)
+  Ending job conformer_a1678 for vinoxy (0:02:16)
+
+Conformer jobs for vinoxy successfully terminated.
+
+Running job composite_a1687 for vinoxy
+  Ending job composite_a1674 for OH (0:02:32)
+
+Optimized geometry for OH at cbs-qb3:
+O       0.00000000    0.00000000   -0.12209300
+H       0.00000000    0.00000000    0.85305500
+
+Running job freq_a1688 for OH
+  Ending job freq_a1688 for OH (0:00:35)
+Warning: Number of basis functions (nbasis) has changed from 24 to 25
+
+All jobs for species OH successfully converged. Elapsed time: 00:03:09
+  Ending job composite_a1685 for methylamine (0:02:03)
+
+Optimized geometry for methylamine at cbs-qb3:
+N       0.82426700    0.20619100   -0.34885200
+C      -0.56981000   -0.02279400    0.04344100
+H      -1.08479900   -0.56295600   -0.75538900
+H      -0.71377000   -0.58798600    0.97813400
+H      -1.07552700    0.93999200    0.15484500
+H       1.30553300   -0.68101300   -0.45687700
+H       1.31410600    0.70856700    0.38469700
+
+Running job freq_a1689 for methylamine
+Running job scan_a1690 for methylamine (pivots: [1, 2])
+  Ending job conformer_a1682 for propene (0:02:55)
+
+Conformer jobs for propene successfully terminated.
+
+Running job composite_a1691 for propene
+  Ending job freq_a1689 for methylamine (0:00:40)
+Warning: Number of basis functions (nbasis) has changed from 66 to 68
+  Ending job composite_a1686 for N2H4 (0:10:28)
+
+Optimized geometry for N2H4 at cbs-qb3:
+N      -0.64840700    0.00024400   -0.36375800
+N       0.64840800   -0.00106300    0.36375500
+H      -1.14843400   -0.79601100    0.03021600
+H      -1.14892100    0.79442900    0.03375600
+H       1.14768400    0.79641500   -0.02869200
+H       1.14967100   -0.79401500   -0.03527700
+
+Running job freq_a1692 for N2H4
+Running job scan_a1693 for N2H4 (pivots: [1, 2])
+  Ending job freq_a1692 for N2H4 (0:00:37)
+Warning: Number of basis functions (nbasis) has changed from 60 to 62
+  Ending job composite_a1691 for propene (0:14:27)
+
+Optimized geometry for propene at cbs-qb3:
+C      -1.10289700    0.12082900   -0.25978300
+C       0.16168500   -0.25008400    0.45752100
+C       1.39304700    0.01218600    0.03065300
+H      -0.89493200    0.64391900   -1.19612000
+H      -1.73214900    0.76806500    0.36125600
+H      -1.69997400   -0.76857400   -0.49005100
+H       0.03563100   -0.77623400    1.40247600
+H       2.26742000   -0.28434000    0.59893800
+H       1.57216900    0.53423200   -0.90488900
+
+Running job freq_a1694 for propene
+Running job scan_a1695 for propene (pivots: [1, 2])
+  Ending job freq_a1694 for propene (0:01:09)
+Warning: Number of basis functions (nbasis) has changed from 90 to 93
+  Ending job composite_a1687 for vinoxy (0:23:17)
+
+Optimized geometry for vinoxy at cbs-qb3:
+O       0.98635600   -0.15407700    0.26054000
+C       2.81542200    1.26704200    0.57845700
+C       2.16411400    0.12608400    0.02793500
+H       3.85230800    1.48727500    0.35547800
+H       2.25688900    1.92471400    1.23327000
+H       2.77290100   -0.51768900   -0.63546200
+
+Running job freq_a1696 for vinoxy
+Running job scan_a1697 for vinoxy (pivots: [2, 3])
+  Ending job freq_a1696 for vinoxy (0:01:09)
+Warning: Number of basis functions (nbasis) has changed from 72 to 75
+  Ending job scan_a1690 for methylamine (0:28:32)
+Determined a symmetry number of 3 for rotor of species methylamine between pivots [1, 2] based on the number of peaks and valleys, all within the determined resolution criteria.
+Rotor scan between pivots [1, 2] for methylamine (with symmetry 3) is:
+
+All jobs for species methylamine successfully converged. Elapsed time: 00:31:33
+  Ending job scan_a1695 for propene (0:19:19)
+Determined a symmetry number of 3 for rotor of species propene between pivots [1, 2] based on the number of peaks and valleys, all within the determined resolution criteria.
+Rotor scan between pivots [1, 2] for propene (with symmetry 3) is:
+
+All jobs for species propene successfully converged. Elapsed time: 00:36:50
+  Ending job scan_a1693 for N2H4 (0:26:54)
+Warning: the species corresponding to output.out is different in energy from the lowest energy conformer by 10.22 kJ/mol. This can cause significant errors in your computed rate constants. 
+Species N2H4 is not oriented correctly around pivots [1, 2], searching for a better conformation...
+Error: job_num: 1698
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: opt
+Error: job_name: opt_a1698
+Error: level_of_theory: 
+Error: software: None
+Error: method: 
+Error: basis_set: 
+Error: Could not determine software for job opt_a1698
+Error: Setting it to gaussian
+Running job opt_a1698 for N2H4
+Rotor scan between pivots [1, 2] for N2H4 is:
+
+All jobs for species N2H4 successfully converged. Elapsed time: 00:39:29
+  Ending job opt_a1698 for N2H4 (0:01:07)
+Error: job_num: 1699
+Error: ess_trsh_methods: []
+Error: trsh: 
+Error: job_type: opt
+Error: job_name: opt_a1699
+Error: level_of_theory: 
+Error: software: None
+Error: method: 
+Error: basis_set: 
+Error: Could not determine software for job opt_a1699
+Error: Setting it to gaussian
+Running job opt_a1699 for N2H4 (fine opt)
+  Ending job opt_a1699 for N2H4 (0:00:35)
+
+Optimized geometry for N2H4 at :
+N      -0.64628800    0.01133300   -0.33835700
+N       0.63048600    0.01999500    0.36658200
+H      -1.14764200   -0.82616600    0.01047400
+H      -1.21863700    0.81482300   -0.01081600
+H       0.53239200    0.58030500    1.23657800
+H       1.27092800    0.57456300   -0.23068800
+
+Running job composite_a1700 for N2H4
+  Ending job composite_a1700 for N2H4 (0:10:03)
+
+Optimized geometry for N2H4 at cbs-qb3:
+N      -0.65290500    0.01707700   -0.30192400
+N       0.61708000    0.05498100    0.36591200
+H      -1.13143400   -0.82163600    0.00542400
+H      -1.23890700    0.81257200   -0.05731400
+H       0.56883900    0.54964900    1.25418100
+H       1.25856600    0.56221000   -0.23250600
+
+Running job freq_a1701 for N2H4
+  Ending job freq_a1701 for N2H4 (0:01:07)
+Warning: Number of basis functions (nbasis) has changed from 60 to 62
+
+All jobs for species N2H4 successfully converged. Elapsed time: 00:52:24
+Currently running jobs:
+{'vinoxy': [u'scan_a1697']}
+  Ending job scan_a1697 for vinoxy (0:49:02)
+Warning: Rotor scan of vinoxy between pivots [2, 3] has a barrier larger than 40 kJ/mol. Invalidating rotor.
+*INVALIDATED* Rotor scan between pivots [2, 3] for vinoxy is:
+
+All jobs for species vinoxy successfully converged. Elapsed time: 01:14:49
+
+
+Loading the RMG database...
+Loading thermodynamics library from BurkeH2O2.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from thermo_DFT_CCSDTF12_BAC.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from DFT_QCI_thermo.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Klippenstein_Glarborg2016.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from primaryThermoLibrary.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from primaryNS.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from NitrogenCurran.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from NOx2018.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from FFCM1(-).py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurLibrary.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurGlarborgH2S.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CHO.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from GRI-Mech3.0-N.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from JetSurF2.0.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SABIC_aromatics.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Fulvene_H.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from JetSurF1.0.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CH.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from NISTThermoLibrary.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from C10H11.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from naphthalene_H.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Chlorinated_Hydrocarbons.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Chernov.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Lai_Hexylbenzene.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CHON.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurGlarborgBozzelli.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CurranPentane.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurHaynes.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from Narayanaswamy.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from vinylCPD_H.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from BurcatNS.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CN.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurGlarborgNS.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from USC-Mech-ii.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CHN.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from GRI-Mech3.0.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from bio_oil.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from SulfurGlarborgMarshall.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from CBS_QB3_1dHR.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics library from C3.py in /home/dranasinghe/Software/rmg/RMG-database/input/thermo/libraries...
+Loading thermodynamics group database from /home/dranasinghe/Software/rmg/RMG-database/input/thermo/groups...
+Loading transport library from NOx2018.py in /home/dranasinghe/Software/rmg/RMG-database/input/transport/libraries...
+Loading transport library from GRI-Mech.py in /home/dranasinghe/Software/rmg/RMG-database/input/transport/libraries...
+Loading transport library from PrimaryTransportLibrary.py in /home/dranasinghe/Software/rmg/RMG-database/input/transport/libraries...
+Loading transport group database from /home/dranasinghe/Software/rmg/RMG-database/input/transport/groups...
+Loading frequencies group database from /home/dranasinghe/Software/rmg/RMG-database/input/statmech/groups...
+Loading Platts additivity group database from /home/dranasinghe/Software/rmg/RMG-database/input/solvation/groups...
+
+
+
+Symmetry input file written to /media/sf_Work/ARC-Calculations/scratch/0.symm
+Point group: Cs
+Determined a symmetry number of 3 for rotor of species methylamine between pivots [1, 2] based on the number of peaks and valleys, all within the determined resolution criteria.
+Using the following BAC for methylamine: {'C-N': 1, 'H-N': 2, 'C-H': 3}
+Loading species methylamine...
+Assigned a frequency scale factor of 0.99 for model chemistry cbs-qb3
+Loading statistical mechanics parameters for methylamine...
+Saving statistical mechanics parameters for methylamine...
+Saving thermo for methylamine...
+
+
+
+Thermodynamics for methylamine:
+  Enthalpy of formation (298 K)   =    -5.917 kcal/mol
+  Entropy of formation (298 K)    =    57.803 cal/(mol*K)
+   =========== =========== =========== =========== ===========
+   Temperature Heat cap.   Enthalpy    Entropy     Free energy
+   (K)         (cal/mol*K) (kcal/mol)  (cal/mol*K) (kcal/mol)
+   =========== =========== =========== =========== ===========
+           300      11.958      -5.893      57.882     -23.258
+           400      14.199      -4.586      61.627     -29.237
+           500      16.440      -3.053      65.038     -35.572
+           600      18.535      -1.303      68.223     -42.237
+           800      22.110       2.775      74.064     -56.476
+          1000      24.946       7.492      79.315     -71.823
+          1500      29.632      21.257      90.414    -114.363
+          2000      32.153      36.766      99.320    -161.873
+          2400      33.365      49.886     105.296    -202.825
+   =========== =========== =========== =========== ===========
+
+
+
+Symmetry input file written to /media/sf_Work/ARC-Calculations/scratch/0.symm
+Point group: C2
+Warning: the species corresponding to output.out is different in energy from the lowest energy conformer by 10.22 kJ/mol. This can cause significant errors in your computed rate constants. 
+Warning: the species corresponding to output.out is different in energy from the lowest energy conformer by 10.22 kJ/mol. This can cause significant errors in your computed rate constants. 
+Determined a symmetry number of 1 for rotor of species N2H4 between pivots [1, 2] based on the worst peak resolution criterion.
+Using the following BAC for N2H4: {'N-N': 1, 'H-N': 4}
+Loading species N2H4...
+Assigned a frequency scale factor of 0.99 for model chemistry cbs-qb3
+Loading statistical mechanics parameters for N2H4...
+Warning: the species corresponding to output.out is different in energy from the lowest energy conformer by 10.22 kJ/mol. This can cause significant errors in your computed rate constants. 
+Saving statistical mechanics parameters for N2H4...
+Saving thermo for N2H4...
+
+
+
+Thermodynamics for N2H4:
+  Enthalpy of formation (298 K)   =    18.174 kcal/mol
+  Entropy of formation (298 K)    =    58.089 cal/(mol*K)
+   =========== =========== =========== =========== ===========
+   Temperature Heat cap.   Enthalpy    Entropy     Free energy
+   (K)         (cal/mol*K) (kcal/mol)  (cal/mol*K) (kcal/mol)
+   =========== =========== =========== =========== ===========
+           300      12.193      18.198      58.171       0.747
+           400      13.877      19.502      61.910      -5.262
+           500      15.499      20.972      65.182     -11.620
+           600      17.004      22.598      68.143     -18.288
+           800      19.587      26.266      73.402     -32.455
+          1000      21.654      30.398      78.003     -47.605
+          1500      25.142      42.182      87.511     -89.085
+          2000      27.098      55.287      95.038    -134.789
+          2400      28.080      66.334     100.071    -173.836
+   =========== =========== =========== =========== ===========
+
+
+
+Symmetry input file written to /media/sf_Work/ARC-Calculations/scratch/0.symm
+Point group: Cs
+Determined a symmetry number of 3 for rotor of species propene between pivots [1, 2] based on the number of peaks and valleys, all within the determined resolution criteria.
+Using the following BAC for propene: {'C=C': 1, 'C-C': 1, 'C-H': 6}
+Loading species propene...
+Assigned a frequency scale factor of 0.99 for model chemistry cbs-qb3
+Loading statistical mechanics parameters for propene...
+Saving statistical mechanics parameters for propene...
+Saving thermo for propene...
+
+
+
+Thermodynamics for propene:
+  Enthalpy of formation (298 K)   =     5.122 kcal/mol
+  Entropy of formation (298 K)    =    63.639 cal/(mol*K)
+   =========== =========== =========== =========== ===========
+   Temperature Heat cap.   Enthalpy    Entropy     Free energy
+   (K)         (cal/mol*K) (kcal/mol)  (cal/mol*K) (kcal/mol)
+   =========== =========== =========== =========== ===========
+           300      15.468       5.153      63.742     -13.969
+           400      19.092       6.882      68.691     -20.594
+           500      22.464       8.963      73.320     -27.697
+           600      25.461      11.362      77.686     -35.249
+           800      30.421      16.972      85.721     -51.605
+          1000      34.226      23.454      92.937     -69.483
+          1500      40.181      42.228     108.080    -119.892
+          2000      43.222      63.156     120.100    -177.045
+          2400      44.718      80.762     128.121    -226.729
+   =========== =========== =========== =========== ===========
+
+
+
+Symmetry input file written to /media/sf_Work/ARC-Calculations/scratch/0.symm
+Point group: Cs
+Using the following BAC for vinoxy: {'C-O': 1, 'C=C': 1, 'C-H': 3}
+Loading species vinoxy...
+Assigned a frequency scale factor of 0.99 for model chemistry cbs-qb3
+Loading statistical mechanics parameters for vinoxy...
+Saving statistical mechanics parameters for vinoxy...
+Saving thermo for vinoxy...
+
+
+
+Thermodynamics for vinoxy:
+  Enthalpy of formation (298 K)   =     3.319 kcal/mol
+  Entropy of formation (298 K)    =    61.895 cal/(mol*K)
+   =========== =========== =========== =========== ===========
+   Temperature Heat cap.   Enthalpy    Entropy     Free energy
+   (K)         (cal/mol*K) (kcal/mol)  (cal/mol*K) (kcal/mol)
+   =========== =========== =========== =========== ===========
+           300      12.728       3.344      61.980     -15.250
+           400      15.277       4.747      65.998     -21.652
+           500      17.432       6.386      69.646     -28.437
+           600      19.236       8.222      72.988     -35.571
+           800      22.129      12.373      78.939     -50.778
+          1000      24.252      17.022      84.117     -67.095
+          1500      27.356      30.025      94.619    -111.904
+          2000      28.911      44.126     102.722    -161.318
+          2400      29.764      55.869     108.072    -203.504
+   =========== =========== =========== =========== ===========
+
+
+
+Determined OH to be a linear molecule
+Symmetry input file written to /media/sf_Work/ARC-Calculations/scratch/0.symm
+Point group: Cinfv
+Using the following BAC for OH: {}
+Loading species OH...
+Assigned a frequency scale factor of 0.99 for model chemistry cbs-qb3
+Loading statistical mechanics parameters for OH...
+Saving statistical mechanics parameters for OH...
+Saving thermo for OH...
+
+
+
+Thermodynamics for OH:
+  Enthalpy of formation (298 K)   =     9.031 kcal/mol
+  Entropy of formation (298 K)    =    42.578 cal/(mol*K)
+   =========== =========== =========== =========== ===========
+   Temperature Heat cap.   Enthalpy    Entropy     Free energy
+   (K)         (cal/mol*K) (kcal/mol)  (cal/mol*K) (kcal/mol)
+   =========== =========== =========== =========== ===========
+           300       6.954       9.045      42.624      -3.742
+           400       6.946       9.740      44.624      -8.110
+           500       6.951      10.435      46.174     -12.652
+           600       6.974      11.131      47.443     -17.335
+           800       7.081      12.535      49.462     -27.035
+          1000       7.251      13.967      51.059     -37.092
+          1500       7.720      17.711      54.089     -63.422
+          2000       8.105      21.672      56.365     -91.058
+          2400       8.310      24.958      57.863    -113.912
+   =========== =========== =========== =========== ===========
+
+
+
+Could not retrieve RMG thermo for species OH, possibly due to missing 2D structure (bond orders). Not including this species in the parity plots.
+
+
+
+
+Sources of thermoproperties determined by RMG for the parity plots:
+   methylamine: Thermo library: thermo_DFT_CCSDTF12_BAC
+   N2H4:        Thermo library: thermo_DFT_CCSDTF12_BAC
+   propene:     Thermo library: DFT_QCI_thermo
+   vinoxy:      Thermo library: DFT_QCI_thermo
+

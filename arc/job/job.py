@@ -75,7 +75,7 @@ class Job(object):
     """
     def __init__(self, project, settings, species_name, xyz, job_type, level_of_theory, multiplicity, project_directory,
                  charge=0, conformer=-1, fine=False, shift='', software=None, is_ts=False, scan='', pivots=None,
-                 memory=1500, comments='', trsh='', ess_trsh_methods=None, occ=None, initial_trsh=None, job_num=None,
+                 memory=7500, comments='', trsh='', ess_trsh_methods=None, occ=None, initial_trsh=None, job_num=None,
                  job_server_name=None, job_name=None, job_id=None, server=None, date_time=None, run_time=None):
         self.project = project
         self.settings=settings
@@ -140,16 +140,16 @@ class Job(object):
                             self.method, self.basis_set))
                     self.software = 'gaussian'
                 elif 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
-                    if not self.settings['qchem']:
-                        raise JobError('Could not find the QChem software to run {0}/{1}'.format(
+                    if not self.settings['gaussian']:
+                        raise JobError('Could not find the gaussian software to run {0}/{1}'.format(
                             self.method, self.basis_set))
-                    self.software = 'qchem'
+                    self.software = 'gaussian'
             elif job_type == 'scan':
                 if 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
-                    if not self.settings['qchem']:
-                        raise JobError('Could not find the QChem software to run {0}/{1}'.format(
+                    if not self.settings['gaussian']:
+                        raise JobError('Could not find the gaussian software to run {0}/{1}'.format(
                             self.method, self.basis_set))
-                    self.software = 'qchem'
+                    self.software = 'gaussian'
                 else:
                     if self.settings['gaussian']:
                         self.software = 'gaussian'

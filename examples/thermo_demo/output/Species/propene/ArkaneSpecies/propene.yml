@@ -1,0 +1,124 @@
+RMG_version: 2.3.0
+adjacency_list: '1 C u0 p0 c0 {2,S} {4,S} {5,S} {6,S}
+  2 C u0 p0 c0 {1,S} {3,D} {7,S}
+  3 C u0 p0 c0 {2,D} {8,S} {9,S}
+  4 H u0 p0 c0 {1,S}
+  5 H u0 p0 c0 {1,S}
+  6 H u0 p0 c0 {1,S}
+  7 H u0 p0 c0 {2,S}
+  8 H u0 p0 c0 {3,S}
+  9 H u0 p0 c0 {3,S}
+'
+chemkin_thermo_string: "propene                 H   6C   3          G    10.000  3000.000
+  \ 514.47      1\n 3.89647650E-01 2.85172263E-02-1.52729441E-05 4.00121217E-09-4.11986789E-13
+  \   2\n 1.32724461E+03 2.19645554E+01 3.98604240E+00 5.54898453E-04 6.62557640E-05
+  \   3\n-1.01647761E-07 5.09274696E-11 9.57202308E+02 7.00430847E+00                   4\n"
+class: ArkaneSpecies
+conformer:
+  E0: {class: ScalarQuantity, units: kJ/mol, value: 7.983981963303493}
+  class: Conformer
+  coordinates:
+    class: ArrayQuantity
+    units: angstroms
+    value:
+    - [-1.102897, 0.12082899999999999, -0.259783]
+    - [0.16168499999999997, -0.250084, 0.457521]
+    - [1.393047, 0.012186, 0.030652999999999996]
+    - [-0.8949319999999998, 0.6439189999999999, -1.19612]
+    - [-1.732149, 0.768065, 0.361256]
+    - [-1.699974, -0.7685739999999999, -0.490051]
+    - [0.035631, -0.776234, 1.4024759999999998]
+    - [2.26742, -0.28434, 0.598938]
+    - [1.572169, 0.534232, -0.904889]
+  mass:
+    class: ArrayQuantity
+    units: amu
+    value: [12.000000000000002, 12.000000000000002, 12.000000000000002, 1.00782503224,
+      1.00782503224, 1.00782503224, 1.00782503224, 1.00782503224, 1.00782503224]
+  modes:
+  - class: IdealGasTranslation
+    mass: {class: ScalarQuantity, units: amu, value: 42.04695}
+    quantum: false
+  - class: NonlinearRotor
+    inertia:
+      class: ArrayQuantity
+      units: amu*angstrom^2
+      value: [10.744325343389095, 54.47902186384255, 62.11219800058802]
+    quantum: false
+    rotationalConstant:
+      class: ArrayQuantity
+      units: cm^-1
+      value: [1.5689797650925446, 0.3094334016399957, 0.2714060940684936]
+    symmetry: 1
+  - class: HarmonicOscillator
+    frequencies:
+      class: ArrayQuantity
+      units: cm^-1
+      value: [422.3070600911458, 582.6953181182475, 914.6361504926361, 931.2043925678662,
+        939.517125678042, 1019.2928397805057, 1060.5383574198943, 1177.527269822495,
+        1315.182233120131, 1395.5876108853115, 1434.6968574593468, 1466.6746302021659,
+        1480.1472570792996, 1696.315357510135, 2983.013780829013, 3026.179259089645,
+        3061.1544121713264, 3088.9455419682668, 3096.088050454213, 3175.440383837956]
+    quantum: true
+  - class: HinderedRotor
+    fourier:
+      class: ArrayQuantity
+      units: kJ/mol
+      value:
+      - [0.08116300966146354, -0.034899616870607476, -4.091930069499175, 0.03845065985887288,
+        -0.05564323110627839]
+      - [-4.241532360676002e-05, -2.069557553355679e-05, -2.7100900592135993e-05,
+        -3.2219427527932826e-05, 3.644658681561054e-05]
+    frequency: 216.47654740105915
+    inertia: {class: ScalarQuantity, units: amu*angstrom^2, value: 2.2650448123398887}
+    quantum: false
+    rotationalConstant: {class: ScalarQuantity, units: cm^-1, value: 7.442514585808057}
+    semiclassical: true
+    symmetry: 3
+  number:
+    class: ArrayQuantity
+    value: [6.0, 6.0, 6.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+  opticalIsomers: 1
+  spinMultiplicity: 1
+datetime: 2019-02-16 15:03
+inchi: InChI=1S/C3H6/c1-3-2/h3H,1H2,2H3
+inchi_key: QQONPFPTGQHPMA-UHFFFAOYSA-N
+label: propene
+molecular_weight: {class: ScalarQuantity, units: amu, value: 42.07974395914894}
+smiles: C=CC
+thermo:
+  Cp0: {class: ScalarQuantity, units: J/(mol*K), value: 33.257888}
+  CpInf: {class: ScalarQuantity, units: J/(mol*K), value: 203.704564}
+  E0: {class: ScalarQuantity, units: kJ/mol, value: 7.946469818649978}
+  Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+  Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+  class: NASA
+  polynomials:
+    polynomial1:
+      Tmax: {class: ScalarQuantity, units: K, value: 514.4662302012157}
+      Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+      class: NASAPolynomial
+      coeffs: [3.986042396157137, 0.0005548984526509884, 6.62557640448989e-05, -1.0164776079725867e-07,
+        5.0927469636743336e-11, 957.2023077537522, 7.004308465282108]
+    polynomial2:
+      Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+      Tmin: {class: ScalarQuantity, units: K, value: 514.4662302012157}
+      class: NASAPolynomial
+      coeffs: [0.3896476504022095, 0.028517226327108607, -1.5272944085086937e-05,
+        4.001212173339284e-09, -4.119867888333442e-13, 1327.2446082319218, 21.964555435534184]
+thermo_data:
+  Cp (cal/mol*K): {1000 K: '34.23', 1500 K: '40.18', 2000 K: '43.22', 2400 K: '44.72',
+    300 K: '15.47', 400 K: '19.09', 500 K: '22.46', 600 K: '25.46', 800 K: '30.42'}
+  H298: 5.12 kcal/mol
+  S298: 63.64 cal/mol*K
+xyz: '9
+  propene
+  C -1.102897e-10 1.20829e-11 -2.59783e-11
+  C 1.61685e-11 -2.50084e-11 4.57521e-11
+  C 1.393047e-10 1.2186e-12 3.0653e-12
+  H -8.94932e-11 6.43919e-11 -1.19612e-10
+  H -1.732149e-10 7.68065e-11 3.61256e-11
+  H -1.699974e-10 -7.68574e-11 -4.90051e-11
+  H 3.5631e-12 -7.76234e-11 1.402476e-10
+  H 2.26742e-10 -2.8434e-11 5.98938e-11
+  H 1.572169e-10 5.34232e-11 -9.04889e-11'

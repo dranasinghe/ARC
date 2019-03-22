@@ -1,0 +1,15 @@
+%chk=check.chk
+%mem=1500mb
+%nproc=8
+
+#P opt=(noeigentest, calcfc) cbs-qb3   scf=xqc
+
+name
+
+0 1
+H       1.07017769    0.01874271    0.06872992
+H       2.07017769    0.01874271    0.06872992
+
+
+
+

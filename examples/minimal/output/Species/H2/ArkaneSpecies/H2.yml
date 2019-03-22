@@ -1,0 +1,77 @@
+RMG_version: 2.3.0
+adjacency_list: '1 H u0 p0 c0 {2,S}
+  2 H u0 p0 c0 {1,S}
+'
+chemkin_thermo_string: "H2                      H   2               G    10.000  3000.000
+  \ 606.90      1\n 3.68632060E+00-7.83318396E-04 9.61266199E-07-3.21285166E-10 3.56255352E-14
+  \   2\n-1.09158781E+03-5.14530657E+00 3.49862885E+00 8.15038174E-05-2.56227308E-07
+  \   3\n 5.54135289E-12 3.17270808E-13-1.06195055E+03-4.27705694E+00                   4\n"
+class: ArkaneSpecies
+conformer:
+  E0: {class: ScalarQuantity, units: kJ/mol, value: -8.820327873215163}
+  class: Conformer
+  coordinates:
+    class: ArrayQuantity
+    units: angstroms
+    value:
+    - [1.198048, 0.018743, 0.06873]
+    - [1.942307, 0.018743, 0.06873]
+  mass:
+    class: ArrayQuantity
+    units: amu
+    value: [1.00782503224, 1.00782503224]
+  modes:
+  - class: IdealGasTranslation
+    mass: {class: ScalarQuantity, units: amu, value: 2.01565}
+    quantum: false
+  - class: LinearRotor
+    inertia: {class: ScalarQuantity, units: amu*angstrom^2, value: 0.27912795729933465}
+    quantum: false
+    rotationalConstant: {class: ScalarQuantity, units: cm^-1, value: 60.3939111526206}
+    symmetry: 2
+  - class: HarmonicOscillator
+    frequencies:
+      class: ArrayQuantity
+      units: cm^-1
+      value: [4373.8971774399]
+    quantum: true
+  number:
+    class: ArrayQuantity
+    value: [1.0, 1.0]
+  opticalIsomers: 1
+  spinMultiplicity: 1
+datetime: 2019-02-16 13:28
+inchi: InChI=1S/H2/h1H
+inchi_key: UFHFLCQGNIYNRP-UHFFFAOYSA-N
+label: H2
+molecular_weight: {class: ScalarQuantity, units: amu, value: 2.0158802449594986}
+smiles: '[H][H]'
+thermo:
+  Cp0: {class: ScalarQuantity, units: J/(mol*K), value: 29.100652}
+  CpInf: {class: ScalarQuantity, units: J/(mol*K), value: 37.415124}
+  E0: {class: ScalarQuantity, units: kJ/mol, value: -8.830037385194096}
+  Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+  Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+  class: NASA
+  polynomials:
+    polynomial1:
+      Tmax: {class: ScalarQuantity, units: K, value: 606.9046456303394}
+      Tmin: {class: ScalarQuantity, units: K, value: 10.0}
+      class: NASAPolynomial
+      coeffs: [3.498628848689713, 8.150381741846119e-05, -2.5622730825029203e-07,
+        5.541352894772108e-12, 3.172708076594491e-13, -1061.9505489391754, -4.277056936207787]
+    polynomial2:
+      Tmax: {class: ScalarQuantity, units: K, value: 3000.0}
+      Tmin: {class: ScalarQuantity, units: K, value: 606.9046456303394}
+      class: NASAPolynomial
+      coeffs: [3.686320601804177, -0.0007833183964154629, 9.61266198859958e-07, -3.2128516588839364e-10,
+        3.562553520765403e-14, -1091.587808917259, -5.145306565498212]
+thermo_data:
+  Cp (cal/mol*K): {1000 K: '7.11', 1500 K: '7.49', 2000 K: '7.88', 2400 K: '8.12',
+    300 K: '6.96', 400 K: '6.95', 500 K: '6.95', 600 K: '6.95', 800 K: '7.00'}
+  H298: -0.04 kcal/mol
+  S298: 31.14 cal/mol*K
+xyz: '2
+  H2
+  H 1.198048e-10 1.8743e-12 6.873e-12
+  H 1.942307e-10 1.8743e-12 6.873e-12'

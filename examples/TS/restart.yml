@@ -1,0 +1,85 @@
+composite_method: cbs-qb3
+conformer_level: b97d/6-31g
+ess_settings: {gaussian: c3ddb, molpro: pharos, qchem: pharos, ssh: true}
+fine: true
+generate_conformers: true
+model_chemistry: cbs-qb3
+output:
+  TS_1cd_O2: {composite: /home/dranasinghe/Software/ARC/examples/TS/calcs/TSs/TS_1cd_O2/composite_a1702/output.out,
+    freq: /home/dranasinghe/Software/ARC/examples/TS/calcs/TSs/TS_1cd_O2/freq_a1703/output.out,
+    geo: /home/dranasinghe/Software/ARC/examples/TS/calcs/TSs/TS_1cd_O2/freq_a1703/output.out,
+    status: composite converged; freq converged; freq converged; ; ALL converged}
+project: TS
+reactions: []
+running_jobs:
+  TS_1cd_O2: []
+scan_level: b3lyp/cbsb7
+scan_rotors: false
+species:
+- E0: null
+  arkane_file: null
+  bond_corrections: {}
+  charge: 0
+  chosen_ts: null
+  chosen_ts_method: null
+  execution_time: 01:14:38
+  external_symmetry: null
+  final_xyz: 'N      -0.45114000    0.66862300   -0.05549500
+
+    H      -0.40921200    1.06382600    0.88454500
+
+    H       0.64707400    0.34530800   -0.25977800
+
+    N      -1.27159100   -0.47872600    0.00948900
+
+    H      -1.94372100   -0.42634500    0.76603100
+
+    H      -1.76664700   -0.57165500   -0.87054800
+
+    N       1.92625800   -0.18407700   -0.13823800
+
+    H       1.86809300   -0.75658900    0.72524800
+
+    '
+  generate_thermo: false
+  initial_xyz: 'N      -0.4465194713     0.6830090994    -0.0932618217
+
+    H      -0.4573825998     1.1483344874     0.8104886823
+
+    H       0.6773598975     0.3820642106    -0.2197000290
+
+    N      -1.2239012380    -0.4695695875    -0.0069891203
+
+    H      -1.8039356973    -0.5112019151     0.8166872835
+
+    H      -1.7837217777    -0.5685801608    -0.8405154279
+
+    N       1.9039017235    -0.1568337145    -0.0766247796
+
+    H       1.7333130781    -0.8468572038     0.6711695415
+
+    '
+  is_ts: true
+  label: TS_1cd_O2
+  long_thermo_description: ''
+  multiplicity: 3
+  neg_freqs_trshed: []
+  number_of_rotors: 0
+  opt_level: ''
+  optical_isomers: null
+  rotors_dict: {}
+  rxn_label: null
+  successful_methods: []
+  t0: 1550355819.837115
+  t1: null
+  ts_conf_spawned: true
+  ts_guesses: []
+  ts_methods: [AutoTST]
+  ts_number: null
+  ts_report: ''
+  unsuccessful_methods: []
+t_count: null
+t_max: null
+t_min: null
+ts_guess_level: b3lyp/6-311+g(d,p)
+use_bac: false

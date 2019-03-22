@@ -1,0 +1,15 @@
+%chk=check.chk
+%mem=1500mb
+%nproc=8
+
+#P opt=calcfc wb97xd/6-311++g(d,p)  scf=(tight, direct) int=finegrid scf=xqc
+
+name
+
+0 1
+H       1.15142000   -0.09583500   -0.01601400
+H       1.89587400   -0.09583500   -0.01601300
+
+
+
+

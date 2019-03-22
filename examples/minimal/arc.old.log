@@ -1,0 +1,27 @@
+ARC execution initiated on Sat Feb 16 13:22:58 2019
+
+###############################################################
+#                                                             #
+#                 Automatic Rate Calculator                   #
+#                            ARC                              #
+#                                                             #
+#   Version: 0.1                                              #
+#                                                             #
+###############################################################
+
+Starting project minimal
+
+Using the following settings: {'molpro': 'pharos', 'gaussian': 'c3ddb', 'qchem': 'pharos', 'ssh': True}
+
+Using default level HF/3-21g* for refined conformer searches (after filtering via force fields)
+Using default level b3lyp/6-311+g(d,p) for TS guesses comparison of different methods
+Using composite method cbs-qb3
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+Using default level b3lyp/cbsb7 for scan calculations after composite jobs
+Using default level b3lyp/cbsb7 for frequency calculations after composite jobs
+Using cbs-qb3 as model chemistry for energy corrections in Arkane
+
+
+Considering species: H2
+
+
