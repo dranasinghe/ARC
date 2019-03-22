@@ -29,19 +29,26 @@ import string
 #     }
 # }
 servers = {
-    'server1': {
+    'pharos': {
         'cluster_soft': 'OGE',  # Oracle Grid Engine
-        'address': 'server1.host.edu',
-        'un': '<username>',
-        'key': 'path_to_rsa_key',
+        'address': 'pharos.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/known_hosts',
         'precedence': 'molpro',
     },
-    'server2': {
+    'c3ddb': {
         'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
-        'address': 'server2.host.edu',
-        'un': '<username>',
-        'key': 'path_to_rsa_key',
+        'address': 'c3ddb01.mit.edu',
+        'un': 'duminda',
+        'key': '/home/dranasinghe/.ssh/id_rsa',
     }
+    'rmg': {
+	'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
+	'adddress': 'rmg.mit.edu',
+	'un': 'duminda',
+	'key': '/home/dranasinghe/.ssh/id_rsa',
+    }
+
 }
 
 check_status_command = {'OGE': 'export SGE_ROOT=/opt/sge; /opt/sge/bin/lx24-amd64/qstat',
@@ -72,13 +79,13 @@ output_filename = {'gaussian': 'input.log',
                    'molpro': 'input.out',
 }
 
-default_levels_of_theory = {'conformer': 'b97-d3/6-311+g(d,p)',
+default_levels_of_theory = {'conformer': 'b97d/6-31g',
                             'ts_guesses': 'b3lyp/6-31+g(d,p)',  # used for IRC as well
-                            'opt': 'wb97xd/6-311++g(d,p)',
-                            'freq': 'wb97xd/6-311++g(d,p)',  # should be the same level as opt
+                            'opt': 'B3lyp/CBSB7',
+                            'freq': 'B3LYP/CBSB7',  # should be the same level as opt
                             'sp': 'ccsd(t)-f12/cc-pvtz-f12',  # This should be a level for which BAC is available
                             # 'sp': 'b3lyp/6-311+g(3df,2p)',
-                            'scan': 'b3lyp/6-311+g(d,p)',
+                            'scan': 'B3LYP/CBSB7',
                             'scan_for_composite': 'B3LYP/CBSB7',  # This is the frequency level of the CBS-QB3 method
                             'freq_for_composite': 'B3LYP/CBSB7',  # This is the frequency level of the CBS-QB3 method
 }
