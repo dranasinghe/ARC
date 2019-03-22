@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 import os
 import logging
 import numpy as np
+import datetime
 
 from rdkit import Chem
 from rdkit.Chem import rdMolTransforms as rdmt
@@ -23,8 +24,11 @@ from rmgpy.reaction import Reaction
 from rmgpy.species import Species
 from rmgpy.statmech import NonlinearRotor, LinearRotor
 
-from arc.exceptions import SpeciesError, RotorError, InputError, TSError
+from arc.arc_exceptions import SpeciesError, RotorError, InputError, TSError
 from arc.settings import arc_path, default_ts_methods, valid_chars, minimum_barrier
+from arc.parser import parse_xyz_from_file
+from arc.species.converter import get_xyz_string, get_xyz_matrix, rdkit_conf_from_mol, standardize_xyz_string,\
+    molecules_from_xyz, rmg_mol_from_inchi, order_atoms_in_mol_list, check_isomorphism
 from arc.ts import atst
 
 ##################################################################
@@ -52,16 +56,13 @@ class ARCSpecies(object):
     `opt_level`             ``string``   Level of theory for geometry optimization. Saved for archiving.
     `number_of_atoms`       ``int``      The number of atoms in the species/TS
     `mol`                   ``Molecule`` An RMG:`Molecule` object used for BAC determination.
-                                           Does not necessarily describe bond orders.
-    `xyz_mol`               ``Molecule`` An RMG:Molecule object derived from the given xyz coordinates, if available.
-                                           Used when a match between atom order in the molecule and in xyz is desired
+                                           Atom order corresponds to the order in .initial_xyz
     `mol_list`              ``list``     A list of localized structures generated from 'mol', if possible
     `rmg_species`           ``Species``  An RMG Species object to be converted to an ARCSpecies object
     `bond_corrections`      ``dict``     The bond additivity corrections (BAC) to be used. Determined from the structure
                                            if not directly given.
-    `t0`                    ``float``    Initial time when the first species job was spawned
+    `run_time`              ``timedelta`` Overall species execution time
     `t1`                    ``float``    The T1 diagnostic parameter from Molpro
-    `execution_time`        ``str``      Overall execution time for species
     `neg_freqs_trshed`      ``list``     A list of negative frequencies this species was troubleshooted for
     `generate_thermo`       ``bool``     Whether ot not to calculate thermodynamic properties for this species
     `thermo`                ``HeatCapacityModel``  The thermodata calculated by ARC
@@ -73,7 +74,7 @@ class ARCSpecies(object):
     `ts_guesses`            ``list``     A list of TSGuess objects for each of the specified methods
     `successful_methods`    ``list``     Methods used to generate a TS guess that successfully generated an XYZ guess
     `unsuccessful_methods`  ``list``     Methods used to generate a TS guess that were unsuccessfully
-    `chosen_ts`             ``int``      The TSGuess index corrsponding to the chosen TS conformer used for optimization
+    `chosen_ts`             ``int``      The TSGuess index corresponding to the chosen TS conformer used for optimization
     `chosen_ts_method`      ``str``      The TS method that was actually used for optimization
     `ts_conf_spawned`       ``bool``     Whether conformers were already spawned for the Species (representing a TS)
                                            based on its TSGuess objects
@@ -92,18 +93,19 @@ class ARCSpecies(object):
 *   rotors_dict: {1: {'pivots': pivots_list,
                       'top': top_list,
                       'scan': scan_list,
-                      'success: ''bool''.
+                      'success': ``bool``.
+                      'invalidation_reason': ``str``,
                       'times_dihedral_set': ``int``,
                       'scan_path': <path to scan output file>},
+                      'max_e': ``float``,  # in kJ/mol
                       'symmetry': ``int``,
                   2: {}, ...
                  }
     """
     def __init__(self, is_ts=False, rmg_species=None, mol=None, label=None, xyz=None, multiplicity=None, charge=None,
-                 smiles='', adjlist='', bond_corrections=None, generate_thermo=True, species_dict=None, yml_path=None,
-                 ts_methods=None, ts_number=None, rxn_label=None, external_symmetry=None, optical_isomers=None):
-
-        self.xyz_mol = None
+                 smiles='', adjlist='', inchi='', bond_corrections=None, generate_thermo=True, species_dict=None,
+                 yml_path=None, ts_methods=None, ts_number=None, rxn_label=None, external_symmetry=None,
+                 optical_isomers=None, run_time=None):
         self.t1 = None
         self.ts_number = ts_number
         self.conformers = list()
@@ -119,6 +121,7 @@ class ARCSpecies(object):
         self.external_symmetry = external_symmetry
         self.optical_isomers = optical_isomers
         self.charge = charge
+        self.run_time = run_time
 
         if species_dict is not None:
             # Reading from a dictionary
@@ -148,8 +151,6 @@ class ARCSpecies(object):
             self.chosen_ts = None
             self.generate_thermo = generate_thermo if not self.is_ts else False
             self.long_thermo_description = ''
-            self.t0 = None
-            self.execution_time = None
             self.opt_level = ''
             self.ts_report = ''
             self.yml_path = yml_path
@@ -157,7 +158,7 @@ class ARCSpecies(object):
             self.number_of_rotors = 0
             self.rotors_dict = dict()
             self.rmg_species = rmg_species
-            self.initial_xyz = check_xyz(xyz)
+            self.initial_xyz = check_species_xyz(xyz)
             if bond_corrections is None:
                 self.bond_corrections = dict()
             else:
@@ -165,7 +166,7 @@ class ARCSpecies(object):
 
             if self.yml_path is not None:
                 # a YAML path was given
-                self.from_yml_path(label)
+                self.from_yml_file(label)
                 if label is not None:
                     self.label = label
             elif self.rmg_species is not None:
@@ -182,10 +183,13 @@ class ARCSpecies(object):
                     self.label = label
                 else:
                     self.label = self.rmg_species.label
+                self.mol_list = self.rmg_species.molecule
                 if self.mol is None:
                     self.mol = self.rmg_species.molecule[0]
-                    if len(self.rmg_species.molecule) > 1:
-                        self.mol_list = self.rmg_species.molecule
+                    if len(self.rmg_species.molecule) == 1:
+                        self.mol_list = self.rmg_species.generate_resonance_structures(
+                            keep_isomorphic=False, filter_structures=True)
+                    self.mol_list = self.rmg_species.molecule
                     logging.info('Using localized structure {0} of species {1} for BAC determination. To use a'
                                  ' different  structure, pass the RMG:Molecule object in the `mol` parameter'.format(
                                     self.mol.toSMILES(), self.label))
@@ -194,10 +198,13 @@ class ARCSpecies(object):
             else:
                 # parameters were entered directly, not via an RMG:Species object
                 self.label = label
-                if adjlist and mol is None:
-                    self.mol = Molecule().fromAdjacencyList(adjlist=adjlist)
-                elif smiles and mol is None:
-                    self.mol = Molecule(SMILES=smiles)
+                if self.mol is None:
+                    if adjlist:
+                        self.mol = Molecule().fromAdjacencyList(adjlist=adjlist)
+                    elif inchi:
+                        self.mol = rmg_mol_from_inchi(inchi)
+                    elif smiles:
+                        self.mol = Molecule(SMILES=smiles)
                 if not self.is_ts and self.mol is None and self.generate_thermo:
                     logging.warn('No structure (SMILES, adjList, RMG:Species, or RMG:Molecule) was given for species'
                                  ' {0}, NOT using bond additivity corrections (BAC) for thermo computation.'.format(
@@ -205,27 +212,26 @@ class ARCSpecies(object):
                 self.multiplicity = multiplicity
                 self.charge = charge
 
-            if self.mol is None and not self.is_ts:
-                mol, _ = mol_from_xyz(self.initial_xyz)
-                if self.mol_list is None:
-                    self.mol_list = [mol]
-                    if not self.bond_corrections and self.generate_thermo:
-                        logging.warn('Cannot determine bond additivity corrections (BAC) for species {0} based on xyz'
-                                     ' coordinates only. For better thermoproperties, provide bond corrections.')
-                self.number_of_atoms = len(mol.atoms)
-            elif not self.is_ts:
-                if self.initial_xyz is not None:
-                    # Both xyz and structure were given. Make sure the atom order is synced
-                    # (important for identifying rotor indices)
-                    self.xyz_mol, _ = mol_from_xyz(self.initial_xyz)
-                if self.mol_list is None:
-                    self.mol_list = self.mol.generate_resonance_structures(keep_isomorphic=False, filter_structures=True)
+            if not self.is_ts:
+                # Perceive molecule from xyz coordinates
+                # This also populates mol_list
+                if self.final_xyz or self.initial_xyz:
+                    self.mol_from_xyz()
+                # Generate bond list for applying bond corrections
                 if not self.bond_corrections:
                     self.bond_corrections = self.mol.enumerate_bonds()
-                    self.long_thermo_description += 'Bond corrections: {0}\n'.format(self.bond_corrections)
+                    if self.bond_corrections:
+                        self.long_thermo_description += 'Bond corrections: {0}\n'.format(self.bond_corrections)
 
             if self.mol is not None:
                 self.number_of_atoms = len(self.mol.atoms)
+                if self.mol_list is None:
+                    mol_copy = self.mol.copy(deep=True)
+                    self.mol_list = mol_copy.generate_resonance_structures(keep_isomorphic=False, filter_structures=True)
+            elif not self.bond_corrections and self.generate_thermo:
+                logging.warn('Cannot determine bond additivity corrections (BAC) for species {0} based on xyz'
+                             ' coordinates only. For better thermoproperties, provide bond corrections.')
+
             if self.initial_xyz is not None:
                 # consider the initial guess as one of the conformers if generating others.
                 # otherwise, just consider it as the conformer.
@@ -234,7 +240,7 @@ class ARCSpecies(object):
 
             self.neg_freqs_trshed = list()
 
-        if self.multiplicity is None and not self.is_ts:
+        if self.multiplicity is None:
             self.determine_multiplicity(smiles, adjlist, self.mol)
             logging.debug('No multiplicity specified for {0}, assuming {1}.'.format(self.label, self.multiplicity))
         if self.charge is None:
@@ -278,7 +284,8 @@ class ARCSpecies(object):
             species_dict['unsuccessful_methods'] = self.unsuccessful_methods
             species_dict['chosen_ts_method'] = self.chosen_ts_method
             species_dict['chosen_ts'] = self.chosen_ts
-        species_dict['t0'] = self.t0
+        if self.run_time is not None:
+            species_dict['run_time'] = self.run_time.total_seconds()
         species_dict['t1'] = self.t1
         species_dict['label'] = self.label
         species_dict['long_thermo_description'] = self.long_thermo_description
@@ -294,8 +301,6 @@ class ARCSpecies(object):
         species_dict['neg_freqs_trshed'] = self.neg_freqs_trshed
         if self.bond_corrections is not None:
             species_dict['bond_corrections'] = self.bond_corrections
-        if self.execution_time is not None:
-            species_dict['execution_time'] = self.execution_time
         if self.mol is not None:
             species_dict['mol'] = self.mol.toAdjacencyList()
         if self.initial_xyz is not None:
@@ -310,7 +315,7 @@ class ARCSpecies(object):
             self.label = species_dict['label']
         except KeyError:
             raise InputError('All species must have a label')
-        self.t0 = species_dict['t0'] if 't0' in species_dict else None
+        self.run_time = datetime.timedelta(seconds=species_dict['run_time']) if 'run_time' in species_dict else None
         self.t1 = species_dict['t1'] if 't1' in species_dict else None
         self.e0 = species_dict['E0'] if 'E0' in species_dict else None
         self.arkane_file = species_dict['arkane_file'] if 'arkane_file' in species_dict else None
@@ -318,7 +323,10 @@ class ARCSpecies(object):
         self.rxn_label = species_dict['rxn_label'] if 'rxn_label' in species_dict else None
         self.long_thermo_description = species_dict['long_thermo_description']\
             if 'long_thermo_description' in species_dict else ''
-        self.initial_xyz = species_dict['initial_xyz'] if 'initial_xyz' in species_dict else None
+        self.initial_xyz = check_species_xyz(species_dict['initial_xyz']) if 'initial_xyz' in species_dict else None
+        self.final_xyz = check_species_xyz(species_dict['final_xyz']) if 'final_xyz' in species_dict else ''
+        if 'xyz' in species_dict and self.initial_xyz is None and not self.final_xyz:
+            self.initial_xyz = check_species_xyz(species_dict['xyz'])
         self.is_ts = species_dict['is_ts'] if 'is_ts' in species_dict else False
         if self.is_ts:
             self.ts_conf_spawned = species_dict['ts_conf_spawned'] if 'ts_conf_spawned' in species_dict else False
@@ -360,48 +368,50 @@ class ARCSpecies(object):
         else:
             self.generate_thermo = species_dict['generate_thermo'] if 'generate_thermo' in species_dict else True
         self.opt_level = species_dict['opt_level'] if 'opt_level' in species_dict else ''
-        self.final_xyz = species_dict['final_xyz'] if 'final_xyz' in species_dict else ''
-        if 'xyz' in species_dict and self.initial_xyz is None and not self.final_xyz:
-            self.initial_xyz = species_dict['xyz']
         self.number_of_rotors = species_dict['number_of_rotors'] if 'number_of_rotors' in species_dict else 0
         self.rotors_dict = species_dict['rotors_dict'] if 'rotors_dict' in species_dict else dict()
         self.external_symmetry = species_dict['external_symmetry'] if 'external_symmetry' in species_dict else None
         self.optical_isomers = species_dict['optical_isomers'] if 'optical_isomers' in species_dict else None
         self.neg_freqs_trshed = species_dict['neg_freqs_trshed'] if 'neg_freqs_trshed' in species_dict else list()
         self.bond_corrections = species_dict['bond_corrections'] if 'bond_corrections' in species_dict else dict()
-        self.execution_time = species_dict['execution_time'] if 'execution_time' in species_dict else None
         self.mol = Molecule().fromAdjacencyList(str(species_dict['mol'])) if 'mol' in species_dict else None
         smiles = species_dict['smiles'] if 'smiles' in species_dict else None
+        inchi = species_dict['inchi'] if 'inchi' in species_dict else None
         adjlist = species_dict['adjlist'] if 'adjlist' in species_dict else None
-        if adjlist is not None and self.mol is None:
-            self.mol = Molecule().fromAdjacencyList(adjlist=adjlist)
-        elif smiles is not None and self.mol is None:
-            self.mol = Molecule(SMILES=smiles)
-        if self.mol is None and self.initial_xyz is None and not self.final_xyz:
-            raise SpeciesError('Must have either mol or initial_xyz for species {0}'.format(self.label))
         if self.mol is None:
-            mol, _ = mol_from_xyz(self.initial_xyz)
-            self.mol_list = [mol]
-            self.number_of_atoms = len(mol.atoms)
-        else:
-            if self.initial_xyz is not None:
-                # Both xyz and structure were given. Make sure the atom order is synced
-                # (important for identifying rotor indices)
-                self.xyz_mol, _ = mol_from_xyz(self.initial_xyz)
-            self.mol_list = self.mol.generate_resonance_structures(keep_isomorphic=False, filter_structures=True)
-            if not self.bond_corrections:
+            if adjlist is not None:
+                self.mol = Molecule().fromAdjacencyList(adjlist=adjlist)
+            elif inchi is not None:
+                self.mol = rmg_mol_from_inchi(inchi)
+            elif smiles is not None:
+                self.mol = Molecule(SMILES=smiles)
+        if self.mol is None and not self.is_ts:
+            xyz = self.final_xyz or self.initial_xyz
+            if xyz:
+                self.mol_from_xyz(xyz)
+        if self.mol is not None:
+            if 'bond_corrections' not in species_dict:
                 self.bond_corrections = self.mol.enumerate_bonds()
-                self.long_thermo_description += 'Bond corrections: {0}\n'.format(self.bond_corrections)
+                if self.bond_corrections:
+                    self.long_thermo_description += 'Bond corrections: {0}\n'.format(self.bond_corrections)
             self.number_of_atoms = len(self.mol.atoms)
+            if self.multiplicity is None:
+                self.multiplicity = self.mol.multiplicity
+            if self.charge is None:
+                self.charge = self.mol.getNetCharge()
+            if self.mol_list is None:
+                self.mol_list = self.mol.generate_resonance_structures(keep_isomorphic=False, filter_structures=True)
+        if self.mol is None and self.initial_xyz is None and not self.final_xyz:
+            raise SpeciesError('Must have either mol or xyz for species {0}'.format(self.label))
         if self.initial_xyz is not None and not self.final_xyz:
             # consider the initial guess as one of the conformers if generating others.
             # otherwise, just consider it as the conformer.
             self.conformers.append(self.initial_xyz)
             self.conformer_energies.append(0.0)  # dummy
 
-    def from_yml_path(self, label=None):
+    def from_yml_file(self, label=None):
         """
-        Load important species attributes such as label and final_xyz from the YAML path
+        Load important species attributes such as label and final_xyz from the Arkane YAML file
         Actual QM data parsing is done later when processing thermo and kinetics
         """
         rmg_spc = Species()
@@ -412,7 +422,11 @@ class ARCSpecies(object):
         self.final_xyz = get_xyz_string(xyz=arkane_spc.conformer.coordinates.value,
                                         number=arkane_spc.conformer.number.value)
         if arkane_spc.adjacency_list is not None:
-            self.mol = Molecule().fromAdjacencyList(adjlist=arkane_spc.adjacency_list)
+            try:
+                self.mol = Molecule().fromAdjacencyList(adjlist=arkane_spc.adjacency_list)
+            except ValueError as e:
+                print('Could not read adjlist:\n{0}'.format(arkane_spc.adjacency_list))  # should *not* be logging
+                raise e
         elif arkane_spc.inchi is not None:
             self.mol = Molecule().fromInChI(inchistr=arkane_spc.inchi)
         elif arkane_spc.smiles is not None:
@@ -434,8 +448,7 @@ class ARCSpecies(object):
             if external_symmetry_mode is not None:
                 self.external_symmetry = external_symmetry_mode.symmetry
         if self.initial_xyz is not None:
-            # Make sure the atom order is synced (important for identifying rotor indices)
-            self.xyz_mol, _ = mol_from_xyz(self.final_xyz)
+            self.mol_from_xyz()
         if self.e0 is None:
             self.e0 = arkane_spc.conformer.E0.value_si * 0.001  # convert to kJ/mol
 
@@ -444,11 +457,7 @@ class ARCSpecies(object):
         Generate conformers using RDKit and OpenBabel for all representative localized structures of each species
         """
         if not self.is_ts:
-            if self.xyz_mol is not None:
-                mol_list = [self.xyz_mol]
-            else:
-                mol_list = self.mol_list
-            for mol in mol_list:
+            for mol in self.mol_list:
                 self.find_conformers(mol)
             for xyz in self.xyzs:
                 self.conformers.append(xyz)
@@ -500,7 +509,12 @@ class ARCSpecies(object):
         elif method.lower() in ['ob', 'openbabel', 'opnbbl']:
             opnbbl = True
         if rdkit:
-            rd_xyzs, rd_energies = _get_possible_conformers_rdkit(mol)
+            rd_xyzs, rd_energies = list(), list()
+            try:
+                rd_xyzs, rd_energies = _get_possible_conformers_rdkit(mol)
+            except ValueError as e:
+                logging.warn('Could not generate RDkit conformers for {0}, failed with: {1}'.format(
+                    self.label, e.message))
             if rd_xyzs:
                 rd_xyz = get_min_energy_conformer(xyzs=rd_xyzs, energies=rd_energies)
                 self.xyzs.append(get_xyz_string(xyz=rd_xyz, mol=mol))
@@ -519,11 +533,7 @@ class ARCSpecies(object):
         in self.species_dict[species.label]['rotors_dict']. Also updates 'number_of_rotors'.
         """
         if not self.is_ts:
-            if self.xyz_mol is not None:
-                mol_list = [self.xyz_mol]
-            else:
-                mol_list = self.mol_list
-            for mol in mol_list:
+            for mol in self.mol_list:
                 rotors = find_internal_rotors(mol)
                 for new_rotor in rotors:
                     for existing_rotor in self.rotors_dict.values():
@@ -533,9 +543,9 @@ class ARCSpecies(object):
                         self.rotors_dict[self.number_of_rotors] = new_rotor
                         self.number_of_rotors += 1
             if self.number_of_rotors == 1:
-                logging.info('\nFound 1 rotor for {0}'.format(self.label))
+                logging.info('\nFound one possible rotor for {0}'.format(self.label))
             elif self.number_of_rotors > 1:
-                logging.info('\nFound {0} rotors for {1}'.format(self.number_of_rotors, self.label))
+                logging.info('\nFound {0} possible rotors for {1}'.format(self.number_of_rotors, self.label))
             if self.number_of_rotors > 0:
                 logging.info('Pivot list(s) for {0}: {1}\n'.format(self.label,
                                                     [self.rotors_dict[i]['pivots'] for i in range(self.number_of_rotors)]))
@@ -567,7 +577,8 @@ class ARCSpecies(object):
                 raise RotorError('Rotors for {0} were set beyond the maximal number of times without converging')
             for i, _ in enumerate(scan):
                 scan[i] -= 1  # atom indices start from 0, but atom labels (as in scan) start from 1
-            mol, coordinates = mol_from_xyz(self.final_xyz)
+            coordinates, atoms, _, _, _ = get_xyz_matrix(self.final_xyz)
+            _, mol = molecules_from_xyz(self.final_xyz)
             conf, rd_mol, indx_map = rdkit_conf_from_mol(mol, coordinates)
             rd_scan = [indx_map[scan[i]] for i in range(4)]  # convert the atom indices in `scan` to RDkit indices
 
@@ -578,7 +589,6 @@ class ARCSpecies(object):
             for i in range(rd_mol.GetNumAtoms()):
                 new_xyz.append([conf.GetAtomPosition(indx_map[i]).x, conf.GetAtomPosition(indx_map[i]).y,
                             conf.GetAtomPosition(indx_map[i]).z])
-            _, atoms, _, _, _ = get_xyz_matrix(self.final_xyz)
             self.initial_xyz = get_xyz_string(new_xyz, symbol=atoms)
 
     def determine_symmetry(self):
@@ -635,7 +645,7 @@ class ARCSpecies(object):
             mol = Molecule(SMILES=smiles)
             self.multiplicity = mol.multiplicity
         elif self.initial_xyz:
-            xyz, atoms, x, y, z = get_xyz_matrix(self.initial_xyz)
+            _, atoms, _, _, _ = get_xyz_matrix(self.initial_xyz)
             electrons = 0
             for atom in atoms:
                 for number, symbol in symbol_by_number.items():
@@ -786,6 +796,40 @@ class ARCSpecies(object):
             self.ts_report += '\nThe method that generated the best TS guess and its output used for the' \
                               ' optimization: {0}'.format(self.chosen_ts_method)
 
+    def mol_from_xyz(self, xyz=None):
+        """
+        Make sure atom order in self.mol corresponds to xyz
+        Important for TS discovery and for identifying rotor indices
+
+        This works by generating a molecule from the xyz and using the
+        2D structure to confirm that the perceived molecule is correct.
+        Resonance structures are generated and saved to ``self.mol_list``.
+        """
+        if xyz is None:
+            xyz = self.final_xyz or self.initial_xyz
+
+        if self.mol is not None:
+            # self.mol should have come from another source, e.g. SMILES or yml
+            original_mol = self.mol
+            self.mol = molecules_from_xyz(xyz, multiplicity=self.multiplicity)[1]
+
+            if self.mol is not None and not check_isomorphism(original_mol, self.mol):
+                raise InputError('XYZ and the 2D graph representation of the Molecule are not isomorphic.\n'
+                                 'Got xyz:\n{0}\n\nwhich corresponds to {1}\n{2}\n\nand: {3}\n{4}'.format(
+                                   xyz, self.mol.toSMILES(), self.mol.toAdjacencyList(),
+                                   original_mol.toSMILES(), original_mol.toAdjacencyList()))
+        else:
+            self.mol = molecules_from_xyz(xyz, multiplicity=self.multiplicity)[1]
+
+        if self.mol_list is None:
+            # Assign atom ids first, so they carry through to the resonance structures
+            self.mol.assignAtomIDs()
+            # The generate_resonance_structures method changes atom order
+            # Make a copy so we don't disturb the original order from xyz
+            self.mol_list = self.mol.copy(deep=True).generate_resonance_structures(keep_isomorphic=False,
+                                                                                   filter_structures=True)
+        order_atoms_in_mol_list(ref_mol=self.mol, mol_list=self.mol_list)
+
 
 class TSGuess(object):
     """
@@ -811,7 +855,7 @@ class TSGuess(object):
                                            (product label, product geometry in string format)
     `family`                ``str``      The RMG family that corresponds to the reaction, if applicable
     `rmg_reaction`          ``Reaction`` The RMG Reaction
-    '`t0'                    ``float``    Initial time of spawning the guess job
+    `t0'                    ``float``    Initial time of spawning the guess job
     `execution_time`        ``str``      Overall execution time for species
     `success`               ``bool``     Whether the TS guess method succeeded in generating an XYZ guess or not
     `energy`                ``float``    Relative energy of all TS conformers
@@ -831,7 +875,7 @@ class TSGuess(object):
             self.t0 = None
             self.index = None
             self.execution_time = None
-            self.xyz = check_xyz(xyz)
+            self.xyz = check_species_xyz(xyz)
             self.success = None
             self.energy = None
             self.method = method.lower() if method is not None else 'user guess'
@@ -847,7 +891,7 @@ class TSGuess(object):
             self.reactants_xyz = reactants_xyz if reactants_xyz is not None else list()
             self.products_xyz = products_xyz if products_xyz is not None else list()
             self.rmg_reaction = rmg_reaction
-            self.family = family if family is not None else determine_rmg_family(rmg_reaction=self.rmg_reaction)
+            self.family = family
             # if self.family is None and self.method.lower() in ['kinbot', 'autotst']:
             #     raise TSError('No family specified for method {0}'.format(self.method))
 
@@ -859,6 +903,7 @@ class TSGuess(object):
         ts_dict['success'] = self.success
         ts_dict['energy'] = self.energy
         ts_dict['index'] = self.index
+        ts_dict['execution_time'] = self.execution_time
         if self.xyz:
             ts_dict['xyz'] = self.xyz
         if self.reactants_xyz:
@@ -882,12 +927,13 @@ class TSGuess(object):
         self.xyz = ts_dict['xyz'] if 'xyz' in ts_dict else None
         self.success = ts_dict['success'] if 'success' in ts_dict else None
         self.energy = ts_dict['energy'] if 'energy' in ts_dict else None
+        self.execution_time = ts_dict['execution_time'] if 'execution_time' in ts_dict else None
         self.method = ts_dict['method'].lower() if 'method' in ts_dict else 'user guess'
         if 'user guess' in self.method:
             if self.xyz is None:
                 raise TSError('If no method is specified, an xyz guess must be given')
             self.success = self.success if self.success is not None else True
-            self.execution_time = 0
+            self.execution_time = '0'
         if 'user guess' not in self.method\
                 and self.method not in ['user guess'] + [tsm.lower() for tsm in default_ts_methods]:
             raise TSError('Unrecognized method. Should be either {0}. Got: {1}'.format(
@@ -982,16 +1028,6 @@ class TSGuess(object):
         Determine a TS guess using Kinbot for RMG's unimolecular families
         """
         self.success = False
-
-
-def determine_rmg_family(rmg_reaction):
-    """
-    Determine the RMG family/ies corresponding to the `rmg_reaction`
-    Returns a list of families
-    """
-    if rmg_reaction is None:
-        return []
-    return None
 
 
 def _get_possible_conformers_rdkit(mol):
@@ -1172,86 +1208,11 @@ def find_internal_rotors(mol):
                                     smallest_index = i
                         rotor['scan'].append(smallest_index + 1)
                         rotor['success'] = None
+                        rotor['invalidation_reason'] = ''
                         rotor['times_dihedral_set'] = 0
                         rotor['scan_path'] = ''
                         rotors.append(rotor)
     return rotors
-
-
-def get_xyz_string(xyz, mol=None, number=None, symbol=None):
-    """
-    Convert list of lists xyz form:
-    [[0.6616514836, 0.4027481525, -0.4847382281],
-    [-0.6039793084, 0.6637270105, 0.0671637135],
-    [-1.4226865648, -0.4973210697, -0.2238712255],
-    [-0.4993010635, 0.6531020442, 1.0853092315],
-    [-2.2115796924, -0.4529256762, 0.4144516252],
-    [-1.8113671395, -0.3268900681, -1.1468957003]]
-    into a geometry form read by ESS:
-    C    0.6616514836    0.4027481525   -0.4847382281
-    N   -0.6039793084    0.6637270105    0.0671637135
-    H   -1.4226865648   -0.4973210697   -0.2238712255
-    H   -0.4993010635    0.6531020442    1.0853092315
-    H   -2.2115796924   -0.4529256762    0.4144516252
-    H   -1.8113671395   -0.3268900681   -1.1468957003
-    The atom symbol is derived from either an RMG Molecule object (`mol`) or atom numbers ('number`)
-    or explicitly given (`symbol`).
-    `number` and `symbol` are lists (optional parameters)
-    `xyz` is an array of arrays, as shown in the example above.
-    This function isn't defined as a method of ARCSpecies since it is also used when parsing opt geometry in Scheduler
-    """
-    result = ''
-    if symbol is not None:
-        elements = symbol
-    elif number is not None:
-        elements = []
-        for num in number:
-            elements.append(getElement(int(num)).symbol)
-    elif mol is not None:
-        elements = []
-        for atom in mol.atoms:
-            elements.append(atom.element.symbol)
-    else:
-        raise ValueError("Must have either an RMG:Molecule object input as `mol`, or atomic numbers \ symbols.")
-    for i, coord in enumerate(xyz):
-        result += elements[i] + ' ' * (4 - len(elements[i]))
-        for c in coord:
-            result += '{0:14.8f}'.format(c)
-        result += '\n'
-    return result
-
-
-def get_xyz_matrix(xyz):
-    """
-    Convert a string xyz form:
-    C    0.6616514836    0.4027481525   -0.4847382281
-    N   -0.6039793084    0.6637270105    0.0671637135
-    H   -1.4226865648   -0.4973210697   -0.2238712255
-    H   -0.4993010635    0.6531020442    1.0853092315
-    H   -2.2115796924   -0.4529256762    0.4144516252
-    H   -1.8113671395   -0.3268900681   -1.1468957003
-    into a list of lists xyz form:
-    [[0.6616514836, 0.4027481525, -0.4847382281],
-    [-0.6039793084, 0.6637270105, 0.0671637135],
-    [-1.4226865648, -0.4973210697, -0.2238712255],
-    [-0.4993010635, 0.6531020442, 1.0853092315],
-    [-2.2115796924, -0.4529256762, 0.4144516252],
-    [-1.8113671395, -0.3268900681, -1.1468957003]]
-
-    Returns xyz as well as atoms, x, y, z seperately
-    """
-    x, y, z, atoms = [], [], [], []
-    for line in xyz.split('\n'):
-        if line:
-            atom, xx, yy, zz = line.split()
-            x.append(float(xx))
-            y.append(float(yy))
-            z.append(float(zz))
-            atoms.append(atom)
-    xyz = []
-    for i, _ in enumerate(x):
-        xyz.append([x[i], y[i], z[i]])
-    return xyz, atoms, x, y, z
 
 
 def determine_occ(label, xyz, charge):
@@ -1266,38 +1227,6 @@ def determine_occ(label, xyz, charge):
     electrons -= charge
 
 
-def mol_from_xyz(xyz):
-    """
-    A helper function for creating an `RMG:Molecule` object from xyz in a string format
-    """
-    mol = Molecule()
-    coordinates = list()
-    if not isinstance(xyz, (str, unicode)):
-        raise SpeciesError('xyz must be a string format, got: {0}'.format(type(xyz)))
-    for line in xyz.split('\n'):
-        if line:
-            atom = Atom(element=str(line.split()[0]))
-            coordinates.append([float(line.split()[1]), float(line.split()[2]), float(line.split()[3])])
-            atom.coords = np.array(coordinates[-1], np.float64)
-            mol.addAtom(atom)
-    mol.connectTheDots()  # only adds single bonds, but we don't care
-    return mol, coordinates
-
-
-def rdkit_conf_from_mol(mol, coordinates):
-    """A helper function generating a RDKit:Conformer object from an RMG:Molecule object"""
-    rd_mol, rd_inds = mol.toRDKitMol(removeHs=False, returnMapping=True)
-    Chem.AllChem.EmbedMolecule(rd_mol)  # unfortunately, this mandatory embedding changes the coordinates
-    indx_map = dict()
-    for xyz_index, atom in enumerate(mol.atoms):  # generate an atom index mapping dictionary
-        rd_index = rd_inds[atom]
-        indx_map[xyz_index] = rd_index
-    conf = rd_mol.GetConformer(id=0)
-    for i in range(rd_mol.GetNumAtoms()):  # reset atom coordinates
-        conf.SetAtomPosition(indx_map[i], coordinates[i])
-    return conf, rd_mol, indx_map
-
-
 def nearly_equal(a, b, sig_fig=5):
     """
     A helper function to determine whether two floats are nearly equal.
@@ -1308,8 +1237,6 @@ def nearly_equal(a, b, sig_fig=5):
 
 def determine_rotor_symmetry(rotor_path, label, pivots):
     """
-    **  This is a temporary function, will soon be incorporated in Arkane instead**
-
     Determine the rotor symmetry number from the potential scan given in :list:`energies` in J/mol units
     Assumes the list represents a 360 degree scan
     str:`label` is the species name, used for logging and error messages
@@ -1330,28 +1257,38 @@ def determine_rotor_symmetry(rotor_path, label, pivots):
         tol = 0.10 * max_e  # tolerance for the second criterion
     else:
         tol = max_e
-    peaks, valleys = list(), [energies[0]]  # the peaks and valleys of the scan
-    worst_peak_resolution, worst_valley_resolution = 0, max(energies[1] - energies[0], energies[-2] - energies[-1])
+    min_e = energies[0]
+    for i, e in enumerate(energies):
+        # sometimes the opt level and scan levels mismatch, causing the minimum to be close to 0 degrees, but not at 0
+        if e < min_e:
+            min_e = e
+    peaks, valleys = list(), list()  # the peaks and valleys of the scan
+    worst_peak_resolution, worst_valley_resolution = 0, 0
     for i, e in enumerate(energies):
         # identify peaks and valleys, and determine worst resolutions in the scan
-        if i != 0 and i != len(energies) - 1:
-            # this is an intermediate point in the scan
-            if e > energies[i - 1] and e > energies[i + 1]:
-                # this is a local peak
-                if any([diff > worst_peak_resolution for diff in [e - energies[i - 1], e - energies[i + 1]]]):
-                    worst_peak_resolution = max(e - energies[i - 1], e - energies[i + 1])
-                peaks.append(e)
-            elif e < energies[i - 1] and e < energies[i + 1]:
-                # this is a local valley
-                if any([diff > worst_valley_resolution for diff in [energies[i - 1] - e, energies[i + 1] - e]]):
-                    worst_valley_resolution = max(energies[i - 1] - e, energies[i + 1] - e)
-                valleys.append(e)
+        ip1 = cyclic_index_i_plus_1(i, len(energies))  # i Plus 1
+        im1 = cyclic_index_i_minus_1(i)                # i Minus 1
+        if i == 0 and energies[im1] == e:
+            # If the first and last scan points have same energy, change im1
+            im1 -= 1
+            logging.debug('im1: {0}, ip1: {1}, em1: {2}, e: {3}, ep1: {4}'.format(
+                im1, ip1, energies[im1], e, energies[ip1]))
+        if e > energies[im1] and e > energies[ip1]:
+            # this is a local peak
+            if any([diff > worst_peak_resolution for diff in [e - energies[im1], e - energies[ip1]]]):
+                worst_peak_resolution = max(e - energies[im1], e - energies[ip1])
+            peaks.append(e)
+        elif e < energies[im1] and e < energies[ip1]:
+            # this is a local valley
+            if any([diff > worst_valley_resolution for diff in [energies[im1] - e, energies[ip1] - e]]):
+                worst_valley_resolution = max(energies[im1] - e, energies[ip1] - e)
+            valleys.append(e)
     # The number of peaks and valley must always be the same (what goes up must come down), if it isn't then there's
     # something seriously wrong with the scan
     if len(peaks) != len(valleys):
         logging.error('Rotor of species {0} between pivots {1} does not have the same number'
-                      ' of peaks and valleys.'.format(label, pivots))
-        return len(peaks)  # this works for CC(=O)[O]
+                      ' of peaks ({2}) and valleys ({3}).'.format(label, pivots, len(peaks), len(valleys)))
+        return len(peaks), max_e * 0.001  # this works for CC(=O)[O]
     min_peak = min(peaks)
     max_peak = max(peaks)
     min_valley = min(valleys)
@@ -1380,7 +1317,15 @@ def determine_rotor_symmetry(rotor_path, label, pivots):
     else:
         logging.info('Determined a symmetry number of {0} for rotor of species {1} between pivots {2}'
                      ' based on the {3}.'.format(symmetry, label, pivots, reason))
-    return symmetry
+    return symmetry, max_e * 0.001  # max_e in kJ/mol
+
+
+def cyclic_index_i_plus_1(i, length):
+    return i + 1 if i + 1 < length else 0
+
+
+def cyclic_index_i_minus_1(i):
+    return i - 1 if i - 1 > 0 else -1
 
 
 def determine_rotor_type(rotor_path):
@@ -1395,10 +1340,14 @@ def determine_rotor_type(rotor_path):
     return 'FreeRotor' if max_val < minimum_barrier else 'HinderedRotor'
 
 
-def check_xyz(xyz):
+def check_species_xyz(xyz):
     """
-    A helper function to correct xyz string format input
-    Usually empty lines are added by the user either in the begining or the end, and we'd like to remove them
+    First check whether xyz represents a file path or not. If so, parse it first.
+    Then, standardize the xyz format using converter.standardize_xyz_string
     """
     if xyz is not None:
-        return os.linesep.join(line for line in xyz.splitlines() if (line and any([char != ' ' for char in line])))
+        if os.path.isfile(xyz):
+            # check whether xyz is a file path
+            xyz = parse_xyz_from_file(xyz)
+        return standardize_xyz_string(xyz)
+    return None

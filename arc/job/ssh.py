@@ -5,11 +5,12 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 import logging
 import os
 import time
+import datetime
 
 import paramiko
 
 from arc.settings import servers, check_status_command, submit_command, submit_filename, delete_command
-from arc.exceptions import InputError, ServerError
+from arc.arc_exceptions import InputError, ServerError
 
 ##################################################################
 
@@ -27,7 +28,7 @@ class SSH_Client(object):
         if server not in servers.keys():
             raise ValueError('Server name invalid. Currently defined servers are: {0}'.format(servers.keys()))
         self.server = server
-        self.address = servers[server]['adddress']
+        self.address = servers[server]['address']
         self.un = servers[server]['un']
         self.key = servers[server]['key']
         # logger = paramiko.util.logging.getLogger()
@@ -206,7 +207,9 @@ class SSH_Client(object):
         job_id = 0
         cmd = submit_command[servers[self.server]['cluster_soft']] + ' ' + submit_filename[servers[self.server]['cluster_soft']]
         stdout, stderr = self.send_command_to_server(cmd, remote_path)
-        if 'submitted' in stdout[0].lower():
+        if len(stderr) > 0 or len(stdout) == 0:
+            job_status = 'errored'
+        elif 'submitted' in stdout[0].lower():
             job_status = 'running'
             if servers[self.server]['cluster_soft'].lower() == 'oge':
                 job_id = int(stdout[0].split()[2])
@@ -214,8 +217,6 @@ class SSH_Client(object):
                 job_id = int(stdout[0].split()[3])
             else:
                 raise ValueError('Unrecognized cluster software {0}'.format(servers[self.server]['cluster_soft']))
-        if len(stderr) > 0:
-            job_status = 'errored'
         return job_status, job_id
 
     def connect(self):
@@ -252,6 +253,14 @@ class SSH_Client(object):
             ssh.connect(hostname=self.address, username=self.un)
         sftp = ssh.open_sftp()
         return sftp, ssh
+
+    def get_last_modified_time(self, remote_file_path):
+        """returns the last modified time of `remote_file` in a datetime format"""
+        sftp, ssh = self.connect()
+        timestamp = sftp.stat(remote_file_path).st_mtime
+        sftp.close()
+        ssh.close()
+        return datetime.datetime.fromtimestamp(timestamp)
 
 
 def write_file(sftp, ssh, remote_file_path, local_file_path='', file_string=''):

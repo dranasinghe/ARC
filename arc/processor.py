@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function, unicode_liter
 import os
 import shutil
 import logging
+from random import randint
 
 from arkane.input import species as arkane_species, transitionState as arkane_transition_state,\
     reaction as arkane_reaction
@@ -17,8 +18,8 @@ from rmgpy.species import Species
 import arc.rmgdb as rmgdb
 from arc.job.inputs import input_files
 from arc import plotter
-from arc.exceptions import SchedulerError, RotorError
-from arc.species import determine_rotor_symmetry, determine_rotor_type
+from arc.arc_exceptions import SchedulerError, RotorError
+from arc.species.species import determine_rotor_symmetry, determine_rotor_type
 
 ##################################################################
 
@@ -34,8 +35,8 @@ class Processor(object):
     `species_dict`    ``dict``   Keys are labels, values are ARCSpecies objects
     `rxn_list`        ``list``   List of ARCReaction objects
     `output`          ``dict``   Keys are labels, values are output file paths
-    'use_bac'         ``bool``   Whether or not to use bond additivity corrections for thermo calculations
-    'model_chemistry' ``list``   The model chemistry in Arkane for energy corrections (AE, BAC).
+    `use_bac`         ``bool``   Whether or not to use bond additivity corrections for thermo calculations
+    `model_chemistry` ``list``   The model chemistry in Arkane for energy corrections (AE, BAC).
                                    This can be usually determined automatically.
     `lib_long_desc`   ``str``    A multiline description of levels of theory for the outputted RMG libraries
     `project_directory` ``str``  The path of the ARC project directory
@@ -82,6 +83,8 @@ class Processor(object):
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
         output_file_path = os.path.join(output_dir, species.label + '_arkane_output.py')
+        if os.path.isfile(os.path.join(output_dir, 'species_dictionary.txt')):
+            os.remove(os.path.join(output_dir, 'species_dictionary.txt'))
 
         if species.yml_path is not None:
             species.arkane_file = species.yml_path
@@ -109,24 +112,29 @@ class Processor(object):
         else:
             freq_path = self.output[species.label]['freq']
             opt_path = self.output[species.label]['freq']
-        rotors = ''
-        if not species.is_ts:  # temporarily not using rotors for TSs
+        rotors, rotors_description = '', ''
+        if any([i_r_dict['success'] for i_r_dict in species.rotors_dict.values()]):
             rotors = '\n\nrotors = ['
-            pivots_for_description = 'Pivots of considered rotors: '
+            rotors_description = '1D rotors:\n'
             for i in range(species.number_of_rotors):
+                pivots = str(species.rotors_dict[i]['pivots'])
+                scan = str(species.rotors_dict[i]['scan'])
                 if species.rotors_dict[i]['success']:
                     rotor_path = species.rotors_dict[i]['scan_path']
                     rotor_type = determine_rotor_type(rotor_path)
-                    pivots = str(species.rotors_dict[i]['pivots'])
-                    pivots_for_description += str(species.rotors_dict[i]['pivots']) + ' ,'
                     top = str(species.rotors_dict[i]['top'])
                     try:
-                        rotor_symmetry = determine_rotor_symmetry(rotor_path, species.label, pivots)
+                        rotor_symmetry, max_e = determine_rotor_symmetry(rotor_path, species.label, pivots)
                     except RotorError:
                         logging.error('Could not determine rotor symmetry for species {0} between pivots {1}.'
                                       ' Setting the rotor symmetry to 1, which is probably WRONG.'.format(
                                        species.label, pivots))
                         rotor_symmetry = 1
+                        max_e = None
+                    max_e = ', max scan energy: {0:.2f} kJ/mol'.format(max_e) if max_e is not None else ''
+                    free = ' (set as a FreeRotor)' if rotor_type == 'FreeRotor' else ''
+                    rotors_description += 'pivots: ' + str(pivots) + ', dihedral: ' + str(scan) +\
+                        ', rotor symmetry: ' + str(rotor_symmetry) + max_e + free + '\n'
                     if rotor_type == 'HinderedRotor':
                         rotors += input_files['arkane_hindered_rotor'].format(rotor_path=rotor_path, pivots=pivots,
                                                                               top=top, symmetry=rotor_symmetry)
@@ -135,9 +143,13 @@ class Processor(object):
                                                                           top=top, symmetry=rotor_symmetry)
                     if i < species.number_of_rotors - 1:
                         rotors += ',\n          '
+                else:
+                    rotors_description += '* Invalidated! pivots: ' + str(pivots) + ', dihedral: ' + str(scan) +\
+                                          ', invalidation reason: ' + species.rotors_dict[i]['invalidation_reason'] +\
+                                          '\n'
+
             rotors += ']'
-            if species.number_of_rotors:
-                species.long_thermo_description = pivots_for_description[:-2] + '\n'
+            species.long_thermo_description += rotors_description + '\n'
         # write the Arkane species input file
         input_file_path = os.path.join(self.project_directory, 'output', folder_name, species.label,
                                        '{0}_arkane_input.py'.format(species.label))
@@ -163,10 +175,17 @@ class Processor(object):
         species_list_for_thermo_parity = list()
         species_for_thermo_lib = list()
         for species in self.species_dict.values():
-            if species.generate_thermo and not species.is_ts and 'ALL converged' in self.output[species.label]['status']:
+            if not species.is_ts and 'ALL converged' in self.output[species.label]['status']:
                 species_for_thermo_lib.append(species)
                 output_file_path = self._generate_arkane_species_file(species)
-                arkane_spc = arkane_species(str(species.label), species.arkane_file)
+                unique_arkane_species_label = False
+                while not unique_arkane_species_label:
+                    try:
+                        arkane_spc = arkane_species(str(species.label), species.arkane_file)
+                    except ValueError:
+                        species.label += '_(' + str(randint(0, 999)) + ')'
+                    else:
+                        unique_arkane_species_label = True
                 if species.mol_list:
                     arkane_spc.molecule = species.mol_list
                 stat_mech_job = StatMechJob(arkane_spc, species.arkane_file)
@@ -174,10 +193,11 @@ class Processor(object):
                 stat_mech_job.modelChemistry = self.model_chemistry
                 stat_mech_job.frequencyScaleFactor = assign_frequency_scale_factor(self.model_chemistry)
                 stat_mech_job.execute(outputFile=output_file_path, plot=False)
-                thermo_job = ThermoJob(arkane_spc, 'NASA')
-                thermo_job.execute(outputFile=output_file_path, plot=False)
-                species.thermo = arkane_spc.getThermoData()
-                plotter.log_thermo(species.label, path=output_file_path)
+                if species.generate_thermo:
+                    thermo_job = ThermoJob(arkane_spc, 'NASA')
+                    thermo_job.execute(outputFile=output_file_path, plot=False)
+                    species.thermo = arkane_spc.getThermoData()
+                    plotter.log_thermo(species.label, path=output_file_path)
 
                 species.rmg_species = Species(molecule=[species.mol])
                 species.rmg_species.reactive = True
@@ -189,24 +209,27 @@ class Processor(object):
                     logging.info('Could not retrieve RMG thermo for species {0}, possibly due to missing 2D structure '
                                  '(bond orders). Not including this species in the parity plots.'.format(species.label))
                 else:
-                    species_list_for_thermo_parity.append(species)
-
+                    if species.generate_thermo:
+                        species_list_for_thermo_parity.append(species)
         # Kinetics:
         rxn_list_for_kinetics_plots = list()
-        rxn_list_for_kinetics_lib = list()
         arkane_spc_dict = dict()  # a dictionary with all species and the TSs
         for rxn in self.rxn_list:
             logging.info('\n\n')
             species = self.species_dict[rxn.ts_label]  # The TS
             if 'ALL converged' in self.output[species.label]['status'] and rxn.check_ts():
+                self.copy_freq_output_for_ts(species.label)
                 success = True
-                rxn_list_for_kinetics_lib.append(rxn)
+                rxn_list_for_kinetics_plots.append(rxn)
                 output_file_path = self._generate_arkane_species_file(species)
                 arkane_ts = arkane_transition_state(str(species.label), species.arkane_file)
                 arkane_spc_dict[species.label] = arkane_ts
                 stat_mech_job = StatMechJob(arkane_ts, species.arkane_file)
                 stat_mech_job.applyBondEnergyCorrections = False
-                stat_mech_job.modelChemistry = self.model_chemistry
+                if self.model_chemistry:
+                    stat_mech_job.modelChemistry = self.model_chemistry
+                else:
+                    stat_mech_job.applyAtomEnergyCorrections = False
                 stat_mech_job.frequencyScaleFactor = assign_frequency_scale_factor(self.model_chemistry)
                 stat_mech_job.execute(outputFile=None, plot=False)
                 for spc in rxn.r_species + rxn.p_species:
@@ -217,7 +240,10 @@ class Processor(object):
                         stat_mech_job = StatMechJob(arkane_spc, spc.arkane_file)
                         arkane_spc_dict[spc.label] = arkane_spc
                         stat_mech_job.applyBondEnergyCorrections = False
-                        stat_mech_job.modelChemistry = self.model_chemistry
+                        if self.model_chemistry:
+                            stat_mech_job.modelChemistry = self.model_chemistry
+                        else:
+                            stat_mech_job.applyAtomEnergyCorrections = False
                         stat_mech_job.frequencyScaleFactor = assign_frequency_scale_factor(self.model_chemistry)
                         stat_mech_job.execute(outputFile=None, plot=False)
                         # thermo_job = ThermoJob(arkane_spc, 'NASA')
@@ -249,8 +275,6 @@ class Processor(object):
                     plotter.log_kinetics(species.label, path=output_file_path)
                     rxn.rmg_reactions = rmgdb.determine_rmg_kinetics(rmgdb=self.rmgdb, reaction=rxn.rmg_reaction,
                                                                      dh_rxn298=rxn.dh_rxn298)
-                    if rxn.rmg_reactions:
-                        rxn_list_for_kinetics_plots.append(rxn)
 
         logging.info('\n\n')
         output_dir = os.path.join(self.project_directory, 'output')
@@ -264,16 +288,15 @@ class Processor(object):
         if rxn_list_for_kinetics_plots:
             plotter.draw_kinetics_plots(rxn_list_for_kinetics_plots, path=output_dir,
                                         t_min=self.t_min, t_max=self.t_max, t_count=self.t_count)
-        if rxn_list_for_kinetics_lib:
             libraries_path = os.path.join(output_dir, 'RMG libraries')
-            plotter.save_kinetics_lib(rxn_list=rxn_list_for_kinetics_lib, path=libraries_path,
+            plotter.save_kinetics_lib(rxn_list=rxn_list_for_kinetics_plots, path=libraries_path,
                                       name=self.project, lib_long_desc=self.lib_long_desc)
 
         self.clean_output_directory()
 
     def clean_output_directory(self):
         """
-        A helper function to orginize the output directory
+        A helper function to organize the output directory
         - remove redundant rotor.txt files (from kinetics jobs)
         - move remaining rotor files to the rotor directory
         - move the Arkane YAML file from the `species` directory to the base directory, and delete `species`
@@ -306,3 +329,11 @@ class Processor(object):
                         shutil.move(src=os.path.join(species_path, 'species', species_yaml_file),
                                     dst=os.path.join(species_path, species_yaml_file))
                     shutil.rmtree(os.path.join(species_path, 'species'))
+
+    def copy_freq_output_for_ts(self, label):
+        """
+        Copy the frequency job output file into the TS geometry folder
+        """
+        calc_path = os.path.join(self.output[label]['freq'])
+        output_path = os.path.join(self.project_directory, 'output', 'rxns', label, 'geometry', 'frequency.out')
+        shutil.copyfile(calc_path, output_path)

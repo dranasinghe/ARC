@@ -18,15 +18,15 @@ from ase.visualize import view
 from ase import Atom, Atoms
 from ase.io import write as ase_write
 
-from rmgpy.exceptions import AtomTypeError
 from rmgpy.data.thermo import ThermoLibrary
 from rmgpy.data.kinetics.library import KineticsLibrary
 from rmgpy.data.base import Entry
 from rmgpy.quantity import ScalarQuantity
 from rmgpy.species import Species
 
-from arc.species import ARCSpecies, mol_from_xyz, get_xyz_matrix, rdkit_conf_from_mol
-from arc.exceptions import InputError
+from arc.species.species import ARCSpecies
+from arc.species.converter import get_xyz_matrix, rdkit_conf_from_mol, molecules_from_xyz
+from arc.arc_exceptions import InputError
 
 
 ##################################################################
@@ -64,10 +64,9 @@ def show_sticks(xyz=None, species=None, project_directory=None):
     If successful, save an image using draw_3d
     """
     xyz = check_xyz_species_for_drawing(xyz, species)
-    try:
-        mol, coordinates = mol_from_xyz(xyz)
-    except AtomTypeError:
-        return False
+    coordinates, _, _, _, _ = get_xyz_matrix(xyz)
+    s_mol, b_mol = molecules_from_xyz(xyz)
+    mol = b_mol if b_mol is not None else s_mol
     try:
         _, rd_mol, _ = rdkit_conf_from_mol(mol, coordinates)
     except ValueError:
@@ -249,9 +248,11 @@ def draw_thermo_parity_plots(species_list, path=None):
 
 
 def draw_parity_plot(var_arc, var_rmg, var_label, var_units, labels, pp):
+    height = max(len(var_arc) / 3.5, 4)
+    width = 8
     min_var = min(var_arc + var_rmg)
     max_var = max(var_arc + var_rmg)
-    fig = plt.figure(figsize=(5, 4), dpi=120)
+    fig = plt.figure(figsize=(width, height), dpi=120)
     ax = fig.add_subplot(111)
     plt.title('{0} parity plot'.format(var_label))
     for i, label in enumerate(labels):
@@ -261,7 +262,7 @@ def draw_parity_plot(var_arc, var_rmg, var_label, var_units, labels, pp):
     plt.ylabel('{0} determined by RMG ({1})'.format(var_label, var_units))
     plt.xlim = (min_var, max_var * 1.1)
     plt.ylim = (min_var, max_var)
-    plt.legend(shadow=False, frameon=False)
+    plt.legend(shadow=False, frameon=False, loc='best')
     # txt_height = 0.04 * (plt.ylim[1] - plt.ylim[0])  # plt.ylim and plt.xlim return a tuple
     # txt_width = 0.02 * (plt.xlim[1] - plt.xlim[0])
     # text_positions = get_text_positions(var_arc, var_rmg, txt_width, txt_height)
@@ -371,7 +372,7 @@ def get_text_positions(x_data, y_data, txt_width, txt_height):
     text_positions = y_data
     for index, (y, x) in enumerate(a):
         local_text_positions = [i for i in a if i[0] > (y - txt_height)
-                                and (abs(i[1] - x) < txt_width * 2) and i != (y,x)]
+                                and (abs(i[1] - x) < txt_width * 2) and i != (y, x)]
         if local_text_positions:
             sorted_ltp = sorted(local_text_positions)
             if abs(sorted_ltp[0][0] - y) < txt_height:  # True means collision
@@ -408,8 +409,8 @@ def save_geo(species, project_directory):
     geo_path = os.path.join(project_directory, 'output', folder_name, species.label, 'geometry')
     if os.path.exists(geo_path):
         # clean working folder from all previous output
-        for file in os.listdir(geo_path):
-            file_path = os.path.join(geo_path, file)
+        for file0 in os.listdir(geo_path):
+            file_path = os.path.join(geo_path, file0)
             os.remove(file_path)
     else:
         os.makedirs(geo_path)
@@ -440,7 +441,9 @@ def save_thermo_lib(species_list, path, name, lib_long_desc):
         thermo_library = ThermoLibrary(name=name, longDesc=lib_long_desc)
         for i, spc in enumerate(species_list):
             if spc.thermo is not None:
-                spc.long_thermo_description += '\n\nGeometry:\n{0}'.format(spc.final_xyz)
+                spc.long_thermo_description += '\nExternal symmetry: {0}, optical isomers: {1}\n'.format(
+                    spc.external_symmetry, spc.optical_isomers)
+                spc.long_thermo_description += '\nGeometry:\n{0}'.format(spc.final_xyz)
                 thermo_library.loadEntry(index=i+1,
                                          label=spc.label,
                                          molecule=spc.mol_list[0].toAdjacencyList(),
@@ -480,10 +483,10 @@ def save_kinetics_lib(rxn_list, path, name, lib_long_desc):
                 rxn.rmg_reaction.reactants = reactants
                 rxn.rmg_reaction.products = products
                 entry = Entry(
-                    index = i+1,
-                    item = rxn.rmg_reaction,
-                    data = rxn.kinetics,
-                    label = rxn.label)
+                    index=i+1,
+                    item=rxn.rmg_reaction,
+                    data=rxn.kinetics,
+                    label=rxn.label)
                 rxn.ts_species.make_ts_report()
                 entry.longDesc = rxn.ts_species.ts_report + '\n\nOptimized TS geometry:\n' + rxn.ts_species.final_xyz
                 rxn.rmg_reaction.kinetics = rxn.kinetics

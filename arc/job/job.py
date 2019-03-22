@@ -3,16 +3,15 @@
 
 from __future__ import (absolute_import, division, print_function, unicode_literals)
 import os
-import datetime
 import csv
 import logging
 
-from arc.settings import arc_path, servers, submit_filename, delete_command,\
+from arc.settings import arc_path, servers, submit_filename, delete_command, t_max_format,\
     input_filename, output_filename, rotor_scan_resolution, list_available_nodes_command
 from arc.job.submit import submit_scripts
 from arc.job.inputs import input_files
 from arc.job.ssh import SSH_Client
-from arc.exceptions import JobError, SpeciesError
+from arc.arc_exceptions import JobError, SpeciesError
 
 ##################################################################
 
@@ -41,16 +40,18 @@ class Job(object):
                                            (e.g., "2 1 3 5" as a string or [2, 1, 3, 5] as a list of integers)
     `pivots`           ``list``          The rotor scan pivots, if the job type is scan. Not used directly in these
                                            methods, but used to identify the rotor.
+    `scan_res`         ``int``           The rotor scan resolution in degrees
     `software`         ``str``           The electronic structure software to be used
     `server_nodes`     ``list``          A list of nodes this job was submitted to (for troubleshooting)
-    `memory`           ``int``           The allocated memory (1500 mb by default)
+    `memory`           ``int``           The allocated memory (1500 MB by default)
     `method`           ``str``           The calculation method (e.g., 'B3LYP', 'CCSD(T)', 'CBS-QB3'...)
     `basis_set`        ``str``           The basis set (e.g., '6-311++G(d,p)', 'aug-cc-pVTZ'...)
     `fine`             ``bool``          Whether to use fine geometry optimization parameters
     `shift`            ``str``           A string representation alpha- and beta-spin orbitals shifts (molpro only)
     `comments`         ``str``           Job comments (archived, not used)
-    `date_time`        ``datetime``      The date-time this job was initiated. Determined automatically
-    `run_time`         ``str``           Runtime. Determined automatically
+    `initial_time`     ``datetime``      The date-time this job was initiated. Determined automatically
+    `final_time`       ``datetime``      The date-time this job was initiated. Determined automatically
+    `run_time`         ``timedelta``     Job execution time. Determined automatically
     `job_status`       ``list``          The job's server and ESS statuses. Determined automatically
     `job_server_name`  ``str``           Job's name on the server (e.g., 'a103'). Determined automatically
     `job_name`         ``str``           Job's name for interal usage (e.g., 'opt_a103'). Determined automatically
@@ -63,9 +64,11 @@ class Job(object):
     `server`           ``str``           Server's name. Determined automatically
     'trsh'             ''str''           A troubleshooting handle to be appended to input files
     'ess_trsh_methods' ``list``          A list of troubleshooting methods already tried out for ESS convergence
+    `initial_trsh`     ``dict``          Troubleshooting methods to try by default. Keys are ESS software, values are trshs
+    `scan_trsh`        ``str``           A troubleshooting method for rotor scans
     `occ`              ``int``           The number of occupied orbitals (core + val) from a molpro CCSD sp calc
-    `initial_trsh`     ``dict``          Troubleshooting methods to try by default. Keys are server names, values are trshs
     `project_directory` ``str``          The path to the project directory
+    `max_job_time`     ``int``           The maximal allowed job time on the server in hours
     ================ =================== ===============================================================================
 
     self.job_status:
@@ -75,11 +78,19 @@ class Job(object):
     """
     def __init__(self, project, settings, species_name, xyz, job_type, level_of_theory, multiplicity, project_directory,
                  charge=0, conformer=-1, fine=False, shift='', software=None, is_ts=False, scan='', pivots=None,
+<<<<<<< HEAD
                  memory=7500, comments='', trsh='', ess_trsh_methods=None, occ=None, initial_trsh=None, job_num=None,
                  job_server_name=None, job_name=None, job_id=None, server=None, date_time=None, run_time=None):
+=======
+                 memory=1500, comments='', trsh='', scan_trsh='', ess_trsh_methods=None, initial_trsh=None, job_num=None,
+                 job_server_name=None, job_name=None, job_id=None, server=None, initial_time=None, occ=None,
+                 max_job_time=120, scan_res=None):
+>>>>>>> 9908484b52ef1db19bf8b2da1141d7691f3291fc
         self.project = project
         self.settings=settings
-        self.date_time = date_time if date_time is not None else datetime.datetime.now()
+        self.initial_time = initial_time
+        self.final_time = None
+        self.run_time = None
         self.species_name = species_name
         self.job_num = job_num if job_num is not None else -1
         self.charge = charge
@@ -92,6 +103,9 @@ class Job(object):
         self.ess_trsh_methods = ess_trsh_methods if ess_trsh_methods is not None else list()
         self.trsh = trsh
         self.initial_trsh = initial_trsh if initial_trsh is not None else dict()
+        self.scan_trsh = scan_trsh
+        self.scan_res = scan_res if scan_res is not None else rotor_scan_resolution
+        self.max_job_time = max_job_time
         job_types = ['conformer', 'opt', 'freq', 'optfreq', 'sp', 'composite', 'scan', 'gsm', 'irc', 'ts_guess']
         # the 'conformer' job type is identical to 'opt', but we differentiate them to be identifiable in Scheduler
         if job_type not in job_types:
@@ -145,9 +159,20 @@ class Job(object):
                             self.method, self.basis_set))
                     self.software = 'gaussian'
             elif job_type == 'scan':
+<<<<<<< HEAD
                 if 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
                     if not self.settings['gaussian']:
                         raise JobError('Could not find the gaussian software to run {0}/{1}'.format(
+=======
+                if 'wb97xd' in self.method:
+                    if not self.settings['gaussian']:
+                        raise JobError('Could not find the Gaussian software to run {0}/{1}'.format(
+                            self.method, self.basis_set))
+                    self.software = 'gaussian'
+                elif 'b97' in self.method or 'm06-2x' in self.method or 'def2' in self.basis_set:
+                    if not self.settings['qchem']:
+                        raise JobError('Could not find the QChem software to run {0}/{1}'.format(
+>>>>>>> 9908484b52ef1db19bf8b2da1141d7691f3291fc
                             self.method, self.basis_set))
                     self.software = 'gaussian'
                 else:
@@ -192,7 +217,6 @@ class Job(object):
         self.fine = fine
         self.shift = shift
         self.occ = occ
-        self.run_time = run_time if run_time is not None else ''
         self.job_status = ['initializing', 'initializing']
         self.job_id = job_id if job_id is not None else 0
         self.comments = comments
@@ -218,14 +242,17 @@ class Job(object):
     def as_dict(self):
         """A helper function for dumping this object as a dictionary in a YAML file for restarting ARC"""
         job_dict = dict()
-        job_dict['date_time'] = self.date_time
+        job_dict['initial_time'] = self.initial_time
+        job_dict['final_time'] = self.final_time
+        if self.run_time is not None:
+            job_dict['run_time'] = self.run_time.total_seconds()
+        job_dict['max_job_time'] = self.max_job_time
         job_dict['project_directory'] = self.project_directory
-        job_dict['run_time'] = self.run_time
-        job_dict['date_time'] = self.date_time
         job_dict['job_num'] = self.job_num
         job_dict['server'] = self.server
         job_dict['ess_trsh_methods'] = self.ess_trsh_methods
         job_dict['trsh'] = self.trsh
+        job_dict['initial_trsh'] = self.initial_trsh
         job_dict['job_type'] = self.job_type
         job_dict['job_server_name'] = self.job_server_name
         job_dict['job_name'] = self.job_name
@@ -234,11 +261,17 @@ class Job(object):
         job_dict['fine'] = self.fine
         job_dict['shift'] = self.shift
         job_dict['memory'] = self.memory
+        job_dict['software'] = self.software
         job_dict['occ'] = self.occ
         job_dict['job_status'] = self.job_status
+        if self.conformer >= 0:
+            job_dict['conformer'] = self.conformer
         job_dict['job_id'] = self.job_id
+        job_dict['comments'] = self.comments
         job_dict['scan'] = self.scan
         job_dict['pivots'] = self.pivots
+        job_dict['scan_res'] = self.scan_res
+        job_dict['scan_trsh'] = self.scan_trsh
         return job_dict
 
     def _set_job_number(self):
@@ -251,16 +284,15 @@ class Job(object):
             with open(csv_path, 'wb') as f:
                 writer = csv.writer(f, dialect='excel')
                 row = ['job_num', 'project', 'species_name', 'conformer', 'is_ts', 'charge', 'multiplicity', 'job_type',
-                       'job_name', 'job_id', 'server', 'software', 'memory', 'method', 'basis_set', 'date_time',
-                       'comments']
+                       'job_name', 'job_id', 'server', 'software', 'memory', 'method', 'basis_set', 'comments']
                 writer.writerow(row)
         with open(csv_path, 'rb') as f:
             reader = csv.reader(f, dialect='excel')
             job_num = 0
-            for row in reader:
+            for _ in reader:
                 job_num += 1
-            if job_num == 100000:
-                job_num = 0
+                if job_num == 100000:
+                    job_num = 0
             self.job_num = job_num
 
     def _write_initiated_job_to_csv_file(self):
@@ -275,7 +307,7 @@ class Job(object):
             writer = csv.writer(f, dialect='excel')
             row = [self.job_num, self.project, self.species_name, conformer, self.is_ts, self.charge,
                    self.multiplicity, self.job_type, self.job_name, self.job_id, self.server, self.software,
-                   self.memory, self.method, self.basis_set, self.date_time, self.comments]
+                   self.memory, self.method, self.basis_set, self.comments]
             writer.writerow(row)
 
     def write_completed_job_to_csv_file(self):
@@ -289,9 +321,9 @@ class Job(object):
             with open(csv_path, 'wb') as f:
                 writer = csv.writer(f, dialect='excel')
                 row = ['job_num', 'project', 'species_name', 'conformer', 'is_ts', 'charge', 'multiplicity', 'job_type',
-                       'job_name', 'job_id', 'server', 'software', 'memory', 'method', 'basis_set', 'date_time',
-                       'run_time', 'job_status_(server)', 'job_status_(ESS)', 'ESS troubleshooting methods used',
-                       'comments']
+                       'job_name', 'job_id', 'server', 'software', 'memory', 'method', 'basis_set', 'initial_time',
+                       'final_time', 'run_time', 'job_status_(server)', 'job_status_(ESS)',
+                       'ESS troubleshooting methods used', 'comments']
                 writer.writerow(row)
         csv_path = os.path.join(arc_path, 'completed_jobs.csv')
         if self.conformer < 0:  # this is not a conformer search job
@@ -304,13 +336,26 @@ class Job(object):
                 job_type += ' (fine)'
             row = [self.job_num, self.project, self.species_name, conformer, self.is_ts, self.charge,
                    self.multiplicity, job_type, self.job_name, self.job_id, self.server, self.software,
-                   self.memory, self.method, self.basis_set, self.date_time, self.run_time, self.job_status[0],
-                   self.job_status[1], self.ess_trsh_methods, self.comments]
+                   self.memory, self.method, self.basis_set, self.initial_time, self.final_time, self.run_time,
+                   self.job_status[0], self.job_status[1], self.ess_trsh_methods, self.comments]
             writer.writerow(row)
 
     def write_submit_script(self):
         un = servers[self.server]['un']  # user name
-        self.submit = submit_scripts[self.software].format(name=self.job_server_name, un=un)
+        if self.max_job_time > 9999 or self.max_job_time == 0:
+            self.max_job_time = 120
+        if t_max_format[servers[self.server]['cluster_soft']] == 'days':
+            # e.g., 5-0:00:00
+            d, h = divmod(self.max_job_time, 24)
+            t_max = '{0}-{1}:00:00'.format(d, h)
+        elif t_max_format[servers[self.server]['cluster_soft']] == 'hours':
+            # e.g., 120:00:00
+            t_max = '{0}:00:00'.format(self.max_job_time)
+        else:
+            raise JobError('Could not determine format for maximal job time')
+        self.submit = submit_scripts[servers[self.server]['cluster_soft']][self.software.lower()].format(
+            name=self.job_server_name, un=un, t_max=t_max, mem_cpu=min(int(self.memory * 150), 16000))
+        # Memory convertion: multiply MW value by 1200 to conservatively get it in MB, then divide by 8 to get per cup
         if not os.path.exists(self.local_path):
             os.makedirs(self.local_path)
         with open(os.path.join(self.local_path, submit_filename[servers[self.server]['cluster_soft']]), 'wb') as f:
@@ -377,9 +422,14 @@ wf,spin={spin},charge={charge};}}
                 if self.is_ts:
                     job_type_1 = 'opt=(ts, calcfc, noeigentest)'
                 else:
-                    job_type_1 = 'opt=calcfc'
+                    job_type_1 = 'opt=(calcfc, noeigentest)'
                 if self.fine:
-                    fine = 'scf=(tight, direct) int=finegrid'
+                    # Note that the Acc2E argument is not available in Gaussian03
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                    if self.is_ts:
+                        job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
+                    else:
+                        job_type_1 = 'opt=(calcfc, noeigentest, tight)'
             elif self.software == 'qchem':
                 if self.is_ts:
                     job_type_1 = 'ts'
@@ -400,7 +450,7 @@ wf,spin={spin},charge={charge};}}
 
         elif self.job_type == 'freq':
             if self.software == 'gaussian':
-                job_type_2 = 'freq iop(7/33=1)'
+                job_type_2 = 'freq iop(7/33=1) scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
             elif self.software == 'qchem':
                 job_type_1 = 'freq'
             elif self.software == 'molpro':
@@ -411,10 +461,14 @@ wf,spin={spin},charge={charge};}}
                 if self.is_ts:
                     job_type_1 = 'opt=(ts, calcfc, noeigentest)'
                 else:
-                    job_type_1 = 'opt=calcfc'
+                    job_type_1 = 'opt=(calcfc, noeigentest)'
                 job_type_2 = 'freq iop(7/33=1)'
                 if self.fine:
-                    fine = 'scf=(tight, direct) int=finegrid'
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
+                    if self.is_ts:
+                        job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
+                    else:
+                        job_type_1 = 'opt=(calcfc, noeigentest, tight)'
             elif self.software == 'qchem':
                 self.input += """@@@
 
@@ -447,7 +501,7 @@ $end
 
         if self.job_type == 'sp':
             if self.software == 'gaussian':
-                pass
+                job_type_1 = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
             elif self.software == 'qchem':
                 job_type_1 = 'sp'
             elif self.software == 'molpro':
@@ -456,27 +510,30 @@ $end
         if self.job_type == 'composite':
             if self.software == 'gaussian':
                 if self.fine:
-                    fine = 'scf=(tight, direct) int=finegrid'
+                    fine = 'scf=(tight, direct) integral=(grid=ultrafine, Acc2E=12)'
                 if self.is_ts:
-                    job_type_1 = 'opt=(ts, noeigentest, calcfc)'
+                    job_type_1 = 'opt=(ts, calcfc, noeigentest, tight)'
                 else:
-                    job_type_1 = 'opt=(noeigentest, calcfc)'
+                    job_type_1 = 'opt=(calcfc, noeigentest, tight)'
             else:
                 raise JobError('Currently composite methods are only supported in gaussian')
 
         if self.job_type == 'scan':
             if self.software == 'gaussian':
                 if self.is_ts:
-                    job_type_1 = 'opt=(ts, modredundant, calcfc, noeigentest)'
+                    job_type_1 = 'opt=(ts, modredundant, calcfc, noeigentest, maxStep=5) scf=(tight, direct)' \
+                                 ' integral=(grid=ultrafine, Acc2E=12)'
                 else:
-                    job_type_1 = 'opt=(modredundant, calcfc, noeigentest)'
+                    job_type_1 = 'opt=(modredundant, calcfc, noeigentest, maxStep=5) scf=(tight, direct)' \
+                                 ' integral=(grid=ultrafine, Acc2E=12)'
                 scan_string = ''.join([str(num) + ' ' for num in self.scan])
-                if not divmod(360, rotor_scan_resolution):
-                    raise JobError('Scan job got an illegal rotor scan resolution of {0}'.format(rotor_scan_resolution))
-                scan_string = 'D ' + scan_string + 'S ' + str(int(360 / rotor_scan_resolution)) + ' ' +\
-                              '{0:10}'.format(float(rotor_scan_resolution))
+                if not divmod(360, self.scan_res):
+                    raise JobError('Scan job got an illegal rotor scan resolution of {0}'.format(self.scan_res))
+                scan_string = 'D ' + scan_string + 'S ' + str(int(360 / self.scan_res)) + ' ' +\
+                              '{0:10}'.format(float(self.scan_res))
             else:
-                raise ValueError('Currently rotor scan is only supported in gaussian')
+                raise ValueError('Currently rotor scan is only supported in gaussian. Got: {0} using the {1} level of'
+                                 ' theory'.format(self.software, self.method + '/' + self.basis_set))
         else:
             scan_string = ''
 
@@ -508,7 +565,7 @@ $end
                                                basis=self.basis_set, charge=self.charge, multiplicity=self.multiplicity,
                                                spin=self.spin, xyz=self.xyz, job_type_1=job_type_1,
                                                job_type_2=job_type_2, scan=scan_string, restricted=restricted, fine=fine,
-                                               shift=self.shift, trsh=self.trsh)
+                                               shift=self.shift, trsh=self.trsh, scan_trsh=self.scan_trsh)
             except KeyError as e:
                 logging.error('Could not interpret all input file keys in\n{0}'.format(self.input))
                 raise e
@@ -530,12 +587,17 @@ $end
         ssh.send_command_to_server(command='mkdir -p {0}'.format(self.remote_path))
         remote_file_path = os.path.join(self.remote_path, input_filename[self.software])
         ssh.upload_file(remote_file_path=remote_file_path, file_string=self.input)
+        self.initial_time = ssh.get_last_modified_time(remote_file_path=remote_file_path)
 
     def _download_output_file(self):
         ssh = SSH_Client(self.server)
         remote_file_path = os.path.join(self.remote_path, output_filename[self.software])
         local_file_path = os.path.join(self.local_path, 'output.out')
         ssh.download_file(remote_file_path=remote_file_path, local_file_path=local_file_path)
+        self.final_time = ssh.get_last_modified_time(remote_file_path=remote_file_path)
+        self.determine_run_time()
+        if not os.path.isfile(local_file_path):
+            raise JobError('output file for {0} was not downloaded properly'.format(self.job_name))
 
     def run(self):
         if self.fine:
@@ -618,6 +680,8 @@ $end
                                 return 'unconverged'
                             if 'l502.exe' in line:
                                 return 'unconverged SCF'
+                            if 'l103.exe' in line:
+                                return 'l103 internal coordinate error'
                             if 'Erroneous write' in line or 'Write error in NtrExt1' in line:
                                 reason = 'Ran out of disk space.'
                             if 'l716.exe' in line:
@@ -736,4 +800,6 @@ $end
                 # resubmit
                 self.run()
 
-# TODO: irc, gsm input files
+    def determine_run_time(self):
+        """Determine the run time"""
+        self.run_time = self.final_time - self.initial_time

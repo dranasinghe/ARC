@@ -19,8 +19,8 @@ import logging
 
 from autotst.reaction import AutoTST_Reaction
 
-from arc.species import get_xyz_string
-from arc.exceptions import TSError
+from arc.species.converter import get_xyz_string
+from arc.arc_exceptions import TSError
 from arc.settings import arc_path
 
 

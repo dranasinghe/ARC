@@ -6,10 +6,13 @@ import logging
 import sys
 import os
 import time
+import datetime
 import re
 import shutil
+import subprocess
 from distutils.spawn import find_executable
 from IPython.display import display
+import yaml
 
 from rmgpy.species import Species
 from rmgpy.reaction import Reaction
@@ -17,8 +20,8 @@ from rmgpy.reaction import Reaction
 import arc.rmgdb as rmgdb
 from arc.settings import arc_path, default_levels_of_theory, check_status_command, servers, valid_chars
 from arc.scheduler import Scheduler, time_lapse
-from arc.exceptions import InputError, SettingsError, SpeciesError
-from arc.species import ARCSpecies
+from arc.arc_exceptions import InputError, SettingsError, SpeciesError
+from arc.species.species import ARCSpecies
 from arc.reaction import ARCReaction
 from arc.processor import Processor
 from arc.job.ssh import SSH_Client
@@ -58,7 +61,7 @@ class ARC(object):
                                         This can be usually determined automatically.
     `settings`             ``dict``   A dictionary of available servers and software
     `ess_settings`         ``dict``   An optional input parameter: a dictionary relating ESS to servers
-    `initial_trsh`         ``dict``   Troubleshooting methods to try by default. Keys are server names, values are trshs
+    `initial_trsh`         ``dict``   Troubleshooting methods to try by default. Keys are ESS software, values are trshs
     't0'                   ``float``  Initial time when the project was spawned
     `execution_time`       ``str``    Overall execution time
     `lib_long_desc`        ``str``    A multiline description of levels of theory for the outputted RMG libraries
@@ -66,7 +69,11 @@ class ARC(object):
     `t_min`                ``tuple``  The minimum temperature for kinetics computations, e.g., (500, str('K'))
     `t_max`                ``tuple``  The maximum temperature for kinetics computations, e.g., (3000, str('K'))
     `t_count`              ``int``    The number of temperature points between t_min and t_max for kinetics computations
+    `max_job_time`         ``int``    The maximal allowed job time on the server in hours
     `rmgdb`                ``RMGDatabase``  The RMG database object
+    `allow_nonisomorphic_2d` ``bool`` Whether to optimize species even if they do not have a 3D conformer that is
+                                        isomorphic to the 2D graph representation
+    `memory`               ``int``    The allocated job memory (1500 MB by default)
     ====================== ========== ==================================================================================
 
     `level_of_theory` is a string representing either sp//geometry levels or a composite method, e.g. 'CBS-QB3',
@@ -76,9 +83,10 @@ class ARC(object):
                  conformer_level='', composite_method='', opt_level='', freq_level='', sp_level='', scan_level='',
                  ts_guess_level='', fine=True, generate_conformers=True, scan_rotors=True, use_bac=True,
                  model_chemistry='', ess_settings=None, initial_trsh=None, t_min=None, t_max=None, t_count=None,
-                 verbose=logging.INFO, project_directory=None):
+                 verbose=logging.INFO, project_directory=None, max_job_time=120, allow_nonisomorphic_2d=False,
+                 job_memory=1500):
 
-        self.__version__ = '0.1'
+        self.__version__ = '1.0.0'
         self.verbose = verbose
         self.ess_settings = ess_settings
         self.settings = dict()
@@ -87,6 +95,9 @@ class ARC(object):
         self.lib_long_desc = ''
         self.unique_species_labels = list()
         self.rmgdb = rmgdb.make_rmg_database_object()
+        self.max_job_time = max_job_time
+        self.allow_nonisomorphic_2d = allow_nonisomorphic_2d
+        self.memory = job_memory
 
         if input_dict is None:
             if project is None:
@@ -308,6 +319,8 @@ class ARC(object):
         else:
             # ARC is run from an input or a restart file.
             # Read the input_dict
+            project_directory = project_directory if project_directory is not None\
+                else os.path.abspath(os.path.dirname(input_dict))
             self.from_dict(input_dict=input_dict, project=project, project_directory=project_directory)
         self.restart_dict = self.as_dict()
         self.determine_model_chemistry()
@@ -316,8 +329,12 @@ class ARC(object):
 
         # make a backup copy of the restart file if it exists (but don't save an updated one just yet)
         if os.path.isfile(os.path.join(self.project_directory, 'restart.yml')):
+            if not os.path.isdir(os.path.join(self.project_directory, 'log_and_restart_archive')):
+                os.mkdir(os.path.join(self.project_directory, 'log_and_restart_archive'))
+            local_time = datetime.datetime.now().strftime("%H%M%S_%b%d_%Y")
+            restart_backup_name = 'restart.old.' + local_time + '.yml'
             shutil.copy(os.path.join(self.project_directory, 'restart.yml'),
-                        os.path.join(self.project_directory, 'restart.old.yml'))
+                        os.path.join(self.project_directory, 'log_and_restart_archive', restart_backup_name))
 
     def as_dict(self):
         """
@@ -348,6 +365,8 @@ class ARC(object):
         restart_dict['t_min'] = self.t_min
         restart_dict['t_max'] = self.t_max
         restart_dict['t_count'] = self.t_count
+        restart_dict['max_job_time'] = self.max_job_time
+        restart_dict['allow_nonisomorphic_2d'] = self.allow_nonisomorphic_2d
         return restart_dict
 
     def from_dict(self, input_dict, project=None, project_directory=None):
@@ -356,6 +375,8 @@ class ARC(object):
         If `project` name and `ess_settings` are given as well to __init__, they will override the respective values
         in the restart dictionary.
         """
+        if isinstance(input_dict, (str, unicode)):
+            input_dict = read_file(input_dict)
         if project is None and 'project' not in input_dict:
             raise InputError('A project name must be given')
         self.project = project if project is not None else input_dict['project']
@@ -367,16 +388,21 @@ class ARC(object):
         self.t0 = time.time()  # init time
         self.execution_time = None
         self.verbose = input_dict['verbose'] if 'verbose' in input_dict else self.verbose
-
+        self.max_job_time = input_dict['max_job_time'] if 'max_job_time' in input_dict else 5
+        self.ess_settings = input_dict['ess_settings'] if 'ess_settings' in input_dict else None
+        self.allow_nonisomorphic_2d = input_dict['allow_nonisomorphic_2d']\
+            if 'allow_nonisomorphic_2d' in input_dict else False
         if self.ess_settings is not None:
             self.settings['ssh'] = True
             for ess, server in self.ess_settings.items():
-                if ess.lower() not in ['gaussian', 'qchem', 'molpro']:
-                    raise SettingsError('Recognized ESS software are Gaussian, QChem or Molpro. Got: {0}'.format(ess))
-                if server.lower() not in servers:
-                    server_names = [name for name in servers]
-                    raise SettingsError('Recognized servers are {0}. Got: {1}'.format(server_names, servers))
-                self.settings[ess.lower()] = server.lower()
+                if ess.lower() != 'ssh':
+                    if ess.lower() not in ['gaussian', 'qchem', 'molpro']:
+                        raise SettingsError('Recognized ESS software are Gaussian, QChem or Molpro.'
+                                            ' Got: {0}'.format(ess))
+                    if server.lower() not in servers:
+                        server_names = [name for name in servers]
+                        raise SettingsError('Recognized servers are {0}. Got: {1}'.format(server_names, server))
+                    self.settings[ess.lower()] = server.lower()
         elif 'ess_settings' in input_dict:
             self.settings = input_dict['ess_settings']
             self.settings['ssh'] = True
@@ -390,12 +416,13 @@ class ARC(object):
                 for key, val in spc_output.items():
                     if key in ['geo', 'freq', 'sp', 'composite']:
                         if not os.path.isfile(val):
-                            raise SpeciesError('Could not find {0} output file for species {1}'.format(key, label))
-                    elif key == 'rotors':
-                        for rotor_num, rotor_dict in val.items():
-                            if not os.path.isfile(val['path']):
-                                raise SpeciesError('Could not find {0} output file for rotor {1} of species {2}'.format(
-                                    key, rotor_num, label))
+                            dir_path = os.path.dirname(os.path.realpath(__file__))
+                            if os.path.isfile(os.path.join(dir_path, val)):
+                                # correct relative paths
+                                self.output[label][key] = os.path.join(dir_path, val)
+                            else:
+                                raise SpeciesError('Could not find {0} output file for species {1}: {2}'.format(
+                                    key, label, val))
         self.running_jobs = input_dict['running_jobs'] if 'running_jobs' in input_dict else dict()
         logging.debug('output dictionary successfully parsed:\n{0}'.format(self.output))
         self.t_min = input_dict['t_min'] if 't_min' in input_dict else None
@@ -500,6 +527,16 @@ class ARC(object):
             self.sp_level = ''
         if 'species' in input_dict:
             self.arc_species_list = [ARCSpecies(species_dict=spc_dict) for spc_dict in input_dict['species']]
+            for spc in self.arc_species_list:
+                for rotor_num, rotor_dict in spc.rotors_dict.items():
+                    if not os.path.isfile(rotor_dict['scan_path']) and rotor_dict['success']:
+                        rotor_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), rotor_dict['scan_path'])
+                        if os.path.isfile(rotor_path):
+                            # correct relative paths
+                            spc.rotors_dict[rotor_num]['scan_path'] = os.path.join(rotor_path)
+                        else:
+                            raise SpeciesError('Could not find rotor scan output file for rotor {0} of species {1}:'
+                                               ' {2}'.format(rotor_num, spc.label, rotor_dict['scan_path']))
         else:
             self.arc_species_list = list()
         if 'reactions' in input_dict:
@@ -526,21 +563,24 @@ class ARC(object):
             if not isinstance(rxn, ARCReaction):
                 raise ValueError('All reactions in arc_rxn_list must be ARCReaction objects.'
                                  ' Got {0}'.format(type(rxn)))
-
         self.scheduler = Scheduler(project=self.project, species_list=self.arc_species_list, rxn_list=self.arc_rxn_list,
                                    composite_method=self.composite_method, conformer_level=self.conformer_level,
                                    opt_level=self.opt_level, freq_level=self.freq_level, sp_level=self.sp_level,
-                                   scan_level=self.scan_level, ts_guess_level=self.ts_guess_level ,fine=self.fine,
+                                   scan_level=self.scan_level, ts_guess_level=self.ts_guess_level, fine=self.fine,
                                    settings=self.settings, generate_conformers=self.generate_conformers,
                                    scan_rotors=self.scan_rotors, initial_trsh=self.initial_trsh, rmgdatabase=self.rmgdb,
-                                   restart_dict=self.restart_dict, project_directory=self.project_directory)
+                                   restart_dict=self.restart_dict, project_directory=self.project_directory,
+                                   max_job_time=self.max_job_time, allow_nonisomorphic_2d=self.allow_nonisomorphic_2d,
+                                   memory=self.memory)
+
+        self.save_project_info_file()
+
         prc = Processor(project=self.project, project_directory=self.project_directory,
                         species_dict=self.scheduler.species_dict, rxn_list=self.scheduler.rxn_list,
                         output=self.scheduler.output, use_bac=self.use_bac, model_chemistry=self.model_chemistry,
                         lib_long_desc=self.lib_long_desc, rmgdatabase=self.rmgdb, t_min=self.t_min, t_max=self.t_max,
                         t_count=self.t_count)
         prc.process()
-        self.save_project_info_file()
         self.summary()
         self.log_footer()
 
@@ -556,6 +596,7 @@ class ARC(object):
             fine_txt = '(NOT using a fine grid)'
 
         txt = ''
+        txt += 'ARC v{0}\n'.format(self.__version__)
         txt += 'ARC project {0}\n\nLevels of theory used:\n\n'.format(self.project)
         txt += 'Conformers:       {0}\n'.format(self.conformer_level)
         txt += 'TS guesses:       {0}\n'.format(self.ts_guess_level)
@@ -580,19 +621,19 @@ class ARC(object):
         txt += '\nConsidered the following species and TSs:\n'
         for species in self.arc_species_list:
             if species.is_ts:
-                if species.execution_time is not None:
-                    txt += 'TS {0} (execution time: {1})\n'.format(species.label, species.execution_time)
+                if species.run_time is not None:
+                    txt += 'TS {0} (run time: {1})\n'.format(species.label, species.run_time)
                 else:
                     txt += 'TS {0} (Failed)\n'.format(species.label)
             else:
-                if species.execution_time is not None:
-                    txt += 'Species {0} (execution time: {1})\n'.format(species.label, species.execution_time)
+                if species.run_time is not None:
+                    txt += 'Species {0} (run time: {1})\n'.format(species.label, species.run_time)
                 else:
                     txt += 'Species {0} (Failed!)\n'.format(species.label)
         if self.arc_rxn_list:
             for rxn in self.arc_rxn_list:
                 txt += 'Considered reaction: {0}\n'.format(rxn.label)
-        txt += '\nOverall execution time: {0}'.format(self.execution_time)
+        txt += '\nOverall time since project initiation: {0}'.format(self.execution_time)
         txt += '\n'
 
         with open(path, 'w') as f:
@@ -644,10 +685,11 @@ class ARC(object):
         # Create file handler
         if log_file:
             if os.path.isfile(log_file):
-                old_file = os.path.join(os.path.dirname(log_file), 'arc.old.log')
-                if os.path.isfile(old_file):
-                    os.remove(old_file)
-                shutil.copy(log_file, old_file)
+                if not os.path.isdir(os.path.join(self.project_directory, 'log_and_restart_archive')):
+                    os.mkdir(os.path.join(self.project_directory, 'log_and_restart_archive'))
+                local_time = datetime.datetime.now().strftime("%H%M%S_%b%d_%Y")
+                log_backup_name = 'arc.old.' + local_time + '.log'
+                shutil.copy(log_file, os.path.join(self.project_directory, 'log_and_restart_archive', log_backup_name))
                 os.remove(log_file)
             fh = logging.FileHandler(filename=log_file)
             fh.setLevel(verbose)
@@ -671,6 +713,12 @@ class ARC(object):
         logging.log(level, '#                                                             #')
         logging.log(level, '###############################################################')
         logging.log(level, '')
+
+        # Extract HEAD git commit from ARC
+        head, date = get_git_commit()
+        if head != '' and date != '':
+            logging.log(level, 'The current git HEAD for ARC is:')
+            logging.log(level, '    {0}\n    {1}\n'.format(head, date))
         logging.info('Starting project {0}'.format(self.project))
 
     def log_footer(self, level=logging.INFO):
@@ -728,7 +776,7 @@ class ARC(object):
                                 'b-ccsd(t)-f12/aug-cc-pvtz', 'b-ccsd(t)-f12/aug-cc-pvqz', 'mp2_rmp2_pvdz',
                                 'mp2_rmp2_pvtz', 'mp2_rmp2_pvqz', 'ccsd-f12/cc-pvdz-f12',
                                 'ccsd(t)-f12/cc-pvdz-f12_noscale', 'g03_pbepbe_6-311++g_d_p', 'fci/cc-pvdz',
-                                'fci/cc-pvtz', 'fci/cc-pvqz','bmk/cbsb7', 'bmk/6-311g(2d,d,p)', 'b3lyp/6-31g**',
+                                'fci/cc-pvtz', 'fci/cc-pvqz', 'bmk/cbsb7', 'bmk/6-311g(2d,d,p)', 'b3lyp/6-31g**',
                                 'b3lyp/6-311+g(3df,2p)', 'MRCI+Davidson/aug-cc-pV(T+d)Z']:
                     model_chemistry = sp_level
             self.model_chemistry = model_chemistry
@@ -872,6 +920,27 @@ class ARC(object):
             if char == ' ':  # space IS a valid character for other purposes, but isn't valid in project names
                 raise InputError('A project name (used to naming folders) must not contain spaces.'
                                  ' Got {0}.'.format(self.project))
+
+
+def read_file(path):
+    """
+    Read the ARC YAML input file and return the parameters in a dictionary
+    """
+    if not os.path.isfile(path):
+        raise ValueError('Could not find the input file {0}'.format(path))
+    with open(path, 'r') as f:
+        input_dict = yaml.load(stream=f)
+    return input_dict
+
+
+def get_git_commit():
+    if os.path.exists(os.path.join(arc_path, '.git')):
+        try:
+            return subprocess.check_output(['git', 'log', '--format=%H%n%cd', '-1'], cwd=arc_path).splitlines()
+        except subprocess.CalledProcessError:
+            return '', ''
+    else:
+        return '', ''
 
 
 def delete_all_arc_jobs(server_list):
