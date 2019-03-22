@@ -41,7 +41,7 @@ servers = {
         'address': 'c3ddb01.mit.edu',
         'un': 'duminda',
         'key': '/home/dranasinghe/.ssh/id_rsa',
-    }
+    },
     'rmg': {
 	'cluster_soft': 'Slurm',  # Simple Linux Utility for Resource Management
 	'adddress': 'rmg.mit.edu',
