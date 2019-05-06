@@ -29,7 +29,7 @@ from arc.settings import arc_path, default_ts_methods, valid_chars, minimum_barr
 from arc.parser import parse_xyz_from_file
 from arc.species.converter import get_xyz_string, get_xyz_matrix, rdkit_conf_from_mol, standardize_xyz_string,\
     molecules_from_xyz, rmg_mol_from_inchi, order_atoms_in_mol_list, check_isomorphism
-from arc.ts import atst
+from arc.ts import atst, KinbotGuess
 
 ##################################################################
 
@@ -1027,7 +1027,24 @@ class TSGuess(object):
         """
         Determine a TS guess using Kinbot for RMG's unimolecular families
         """
-        self.success = False
+        kinbot_rxn_types = ["intra_H_migration", "intra_H_migration_suprafacial", "intra_R_migration",
+                            "intra_OH_migration", "cpd_H_migration", "Intra_RH_Add_Endocyclic_F",
+                            "Intra_RH_Add_Endocyclic_R", "Cyclic_Ether_Formation", "Intra_RH_Add_Exocyclic_F",
+                            "Intra_RH_Add_Exocyclic_R", "Retro_Ene", "Intra_R_Add_Endocyclic_F",
+                            "Intra_R_Add_ExoTetCyclic_F", "Intra_R_Add_Exocyclic_F", "Korcek_step2",
+                            "r22_cycloaddition", "r12_cycloaddition", "r12_insertion_R", "r13_insertion_CO2",
+                            "r13_insertion_ROR", "Diels_alder_addition", "Intra_Diels_alder_R", "ketoenol",
+                            "HO2_Elimination_from_PeroxyRadical", "R_Addition_COm3_R", "R_Addition_MultipleBond",
+                            "12_shift_S_F", "12_shift_S_R", "R_Addition_CSm_R", "r13_insertion_RSR"]
+
+        if not isinstance(self.rmg_reaction, Reaction):
+            raise InputError('AutoTST requires an RMG Reaction object. Got: {0}'.format(type(self.rmg_reaction)))
+        if self.family not in kinbot_rxn_types:
+            logging.debug('Got: {0} not Supported by Kinbot'.format(self.family))
+            self.xyz = ''
+        else:
+            self.xyz = KinbotGuess.TSGuess(rmg_reaction=self.rmg_reaction, reaction_family=self.family)
+
 
 
 def _get_possible_conformers_rdkit(mol):
