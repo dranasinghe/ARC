@@ -29,7 +29,7 @@ from arc.settings import arc_path, default_ts_methods, valid_chars, minimum_barr
 from arc.parser import parse_xyz_from_file
 from arc.species.converter import get_xyz_string, get_xyz_matrix, rdkit_conf_from_mol, standardize_xyz_string,\
     molecules_from_xyz, rmg_mol_from_inchi, order_atoms_in_mol_list, check_isomorphism
-from arc.ts import atst, KinbotGuess
+from arc.ts import atst, kinbot_ts_guess
 
 ##################################################################
 
@@ -71,13 +71,13 @@ class ARCSpecies(object):
     `ts_methods`            ``list``     Methods to try for generating TS guesses. If Species is a TS and `ts_methods`
                                            is an empty list, then xyz (user guess) must be given.
                                            If `ts_methods` is None, it will be set to the default methods
-    `ts_guesses`            ``list``     A list of TSGuess objects for each of the specified methods
+    `ts_guesses`            ``list``     A list of ts_guess objects for each of the specified methods
     `successful_methods`    ``list``     Methods used to generate a TS guess that successfully generated an XYZ guess
     `unsuccessful_methods`  ``list``     Methods used to generate a TS guess that were unsuccessfully
-    `chosen_ts`             ``int``      The TSGuess index corresponding to the chosen TS conformer used for optimization
+    `chosen_ts`             ``int``      The ts_guess index corresponding to the chosen TS conformer used for optimization
     `chosen_ts_method`      ``str``      The TS method that was actually used for optimization
     `ts_conf_spawned`       ``bool``     Whether conformers were already spawned for the Species (representing a TS)
-                                           based on its TSGuess objects
+                                           based on its ts_guess objects
     `ts_number`             ``int``      An auto-generated number associating the TS ARCSpecies object with the
                                            corresponding ARCReaction object
     `ts_report`             ``str``      A description of all methods used for guessing a TS and their ranking
@@ -833,7 +833,7 @@ class ARCSpecies(object):
 
 class TSGuess(object):
     """
-    TSGuess class
+    ts_guess class
 
     The user can define xyz directly, and the default `method` will be 'User guess'
     Alternatively, either ARC or the user can provide reactant/s and product/s geometries with a specified `method`
@@ -859,7 +859,7 @@ class TSGuess(object):
     `execution_time`        ``str``      Overall execution time for species
     `success`               ``bool``     Whether the TS guess method succeeded in generating an XYZ guess or not
     `energy`                ``float``    Relative energy of all TS conformers
-    `index`                 ``int``      An index corresponding to the conformer jobs spawned for each TSGuess object
+    `index`                 ``int``      An index corresponding to the conformer jobs spawned for each ts_guess object
                                            Assigned only if self.success is ``True``
     ====================== ============= ===============================================================================
 
@@ -1038,12 +1038,12 @@ class TSGuess(object):
                             "12_shift_S_F", "12_shift_S_R", "R_Addition_CSm_R", "r13_insertion_RSR"]
 
         if not isinstance(self.rmg_reaction, Reaction):
-            raise InputError('AutoTST requires an RMG Reaction object. Got: {0}'.format(type(self.rmg_reaction)))
+            raise InputError('Kinbot requires an RMG Reaction object. Got: {0}'.format(type(self.rmg_reaction)))
         if self.family not in kinbot_rxn_types:
             logging.debug('Got: {0} not Supported by Kinbot'.format(self.family))
             self.xyz = ''
         else:
-            self.xyz = KinbotGuess.TSGuess(rmg_reaction=self.rmg_reaction, reaction_family=self.family)
+            self.xyz = kinbot_ts_guess.ts_guess(rmg_reaction=self.rmg_reaction, reaction_family=self.family)
 
 
 

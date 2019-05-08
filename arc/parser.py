@@ -117,3 +117,95 @@ def parse_xyz_from_file(path):
     if xyz is None and relevant_lines:
         xyz = ''.join([line for line in relevant_lines if line])
     return xyz
+
+def read_rotors(inputfile):
+    """read rotor block of mess input and return rotor dictionary
+    'Pivots', 'PES', 'Symmetry', 'Top'
+    """
+    rotor={}
+    rotorline=inputfile.readline()
+    while rotorline != '':
+        if 'End' in rotorline:
+            break
+        elif 'Group' in rotorline:
+            Top= [int(x) for x in rotorline.split()[1:]]
+            rotor['Top']=Top
+        elif 'Axis' in rotorline:
+            Pivots=[int(x) for x in rotorline.split()[1:]]
+            rotor['Pivots']=Pivots
+        elif 'Symmetry' in rotorline:
+            Symmetry=int(rotorline.split()[1])
+            rotor['Symmetry']=Symmetry
+        elif 'Potential' in rotorline:
+            rotorline=inputfile.readline()
+            Points=[float(x) for x in rotorline.split()]
+            rotor['PES']=Points
+        rotorline=inputfile.readline()
+    return rotor
+
+def read_mess(path):
+    """read Mess inputfile and return a dictionary containg
+     'Freq',
+     'ImaginaryFrequency',
+     'SymmetryFactor',
+     'geom',
+     'name',
+     'rotors is a array of dictionary with Pivots', 'PotentialPoints', 'Symmetry', 'Top' for each rotor
+     """
+
+    data = {}
+    data['ImaginaryFrequency'] = []
+    rotors = []
+    Freq = []
+    inp = open(path, 'r')
+    line = inp.readline()
+    while line != '':
+
+        if 'end barrier' in line:
+            break
+
+        elif 'Barrier' in line:
+            data['name'] = str(line.split()[5])
+
+        elif 'Geometry' in line:
+            geom = []
+            line = inp.readline()
+            while line != '':
+                if 'Core' in line:
+                    break
+                else:
+
+                    coor = line.split()
+                    if len(coor) > 2:
+                        geom.append(coor)
+                line = inp.readline()
+            data['geom'] = geom
+
+        elif 'SymmetryFactor' in line:
+            data['SymmetryFactor'] = float(line.split()[1])
+
+        elif 'Frequencies' in line:
+            line = inp.readline()
+            while line != '':
+                if len(line.strip()) == 0:
+                    break
+                else:
+
+                    vib = [float(x) for x in line.split()]
+                    if len(vib) > 0:
+                        Freq.append(vib)
+                line = inp.readline()
+            data['Freq'] = Freq
+
+        elif 'Rotor' in line:
+
+            rotors.append(read_rotors(inp))
+            data['rotors'] = rotors
+        elif 'ImaginaryFrequency' in line:
+            data['ImaginaryFrequency'] = float(line.split()[1])
+        line = inp.readline()
+        # Close file when finished
+    inp.close()
+    # data.temperature=temp
+    # data.pressure=pressure
+    return data

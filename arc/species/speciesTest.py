@@ -515,7 +515,7 @@ H      -1.69944700    0.93441600   -0.11271200"""
 
 class TestTSGuess(unittest.TestCase):
     """
-    Contains unit tests for the TSGuess class
+    Contains unit tests for the ts_guess class
     """
     @classmethod
     def setUpClass(cls):
@@ -540,7 +540,7 @@ class TestTSGuess(unittest.TestCase):
         cls.tsg2 = TSGuess(xyz=xyz)
 
     def test_as_dict(self):
-        """Test TSGuess.as_dict()"""
+        """Test ts_guess.as_dict()"""
         tsg_dict = self.tsg1.as_dict()
         expected_dict = {'method': u'autotst',
                          'energy': None,
@@ -553,7 +553,7 @@ class TestTSGuess(unittest.TestCase):
         self.assertEqual(tsg_dict, expected_dict)
 
     def test_from_dict(self):
-        """Test TSGuess.from_dict()
+        """Test ts_guess.from_dict()
         Also tests that the round trip to and from a dictionary ended in an RMG Reaction object"""
         ts_dict = self.tsg1.as_dict()
         tsg = TSGuess(ts_dict=ts_dict)

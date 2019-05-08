@@ -2,4 +2,4 @@
 # -*- coding: utf-8 -*-
 
 import atst
-import KinbotGuess
+import kinbot_ts_guess

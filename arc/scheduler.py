@@ -206,12 +206,12 @@ class Scheduler(object):
                     if ts_species.rxn_label is None:
                         ts_species.rxn_label = rxn.label
                 rxn.ts_species = ts_species
-                # Generate TSGuess objects for all methods, start with the user guesses
+                # Generate ts_guess objects for all methods, start with the user guesses
                 for i, user_guess in enumerate(rxn.ts_xyz_guess):  # this is a list of guesses, could be empty
                     ts_species.ts_guesses.append(TSGuess(method='user guess {0}'.format(i), xyz=user_guess,
                                                          rmg_reaction=rxn.rmg_reaction))
                 for tsm in rxn.ts_methods:
-                    # loop through all ts methods of this reaction, generate a TSGuess object if not a user guess
+                    # loop through all ts methods of this reaction, generate a ts_guess object if not a user guess
                     if 'user guess' not in tsm:
                         rmg_reaction = rxn.rmg_reaction
                         if tsm == 'reverse_autotst':
@@ -924,12 +924,12 @@ class Scheduler(object):
                                 if reactant and\
                                         not any([reactant_xyz[0] == label for reactant_xyz in tsg.reactants_xyz]):
                                     # This species is a reactant of rxn,
-                                    # and its geometry wasn't saved in the TSGuess objects
+                                    # and its geometry wasn't saved in the ts_guess objects
                                     tsg.reactants_xyz.append((label, self.species_dict[label].final_xyz))
                                 if product and\
                                         not any([product_xyz[0] == label for product_xyz in tsg.products_xyz]):
                                     # This species is a product of rxn,
-                                    # and its geometry wasn't saved in the TSGuess objects
+                                    # and its geometry wasn't saved in the ts_guess objects
                                     tsg.products_xyz.append((label, self.species_dict[label].final_xyz))
                 self.save_restart_dict()
                 return True  # run freq / sp / scan jobs on this optimized geometry
