@@ -115,7 +115,7 @@ def from_kinbot_get_TS_guess(rReacIndex=None, pReacIndex=None, rxnReacIndexfamil
         print(' Reaction : {0} kinbot instants list: {1}'.format(rxnReacIndexfamily, kb_objReacIndex.species.reac_inst))
 
         num = go_through_all_resonance(rReacIndexres, pReacIndexres, rxnReacIndexfamily, kb_objReacIndex)
-        return [num,kb_objReacIndex.species.reac_inst[num],get_ts_guess(kb_objReacIndex, num, check=True)]
+        return [num,kb_objReacIndex.species.reac_inst[num],kb_objReacIndex.species.reac_name[num],get_ts_guess(kb_objReacIndex, num, check=True)]
     except:
         raise TSError('Failed to find a TS guess using Kinbot')
         pass
